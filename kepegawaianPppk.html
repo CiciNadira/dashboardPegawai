@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kepegawaian - Data PPPK</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap" rel="stylesheet">
+    <!-- Tambahkan CDN untuk JSZip untuk download folder -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+   <style>
+    :root {
+        --bg: linear-gradient(135deg, #f4f6f9 0%, #e9ecef 100%);
+        --card: linear-gradient(135deg, #ffffff 0%, #f9fbfc 100%);
+        --muted: #6b7280;
+        --primary: #1a5cff;
+        --accent: #e8f1ff;
+        --soft: #f1f6ff;
+        --text: #111827;
+        --glass: rgba(10,25,80,0.04);
+        --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.1);
+        --shadow-heavy: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', ui-sans-serif; }
+    body { background: var(--bg); display: flex; color: var(--text); font-size: 15px; height: 100vh; }
+
+    /* =========================
+        SIDEBAR
+    ========================== */
+    .sidebar {
+        width: 260px;
+        background: var(--card);
+        height: 100vh;
+        box-shadow: var(--shadow-medium);
+        padding: 24px 20px 28px;
+        position: fixed;
+        left: 0;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        transition: .3s ease;
+        padding-bottom: 0;
+        border-right: 1px solid #e5e7eb;
+    }
+
+    /* ===== SIDEBAR HEADER ===== */
+    .sidebar-header {
+        text-align: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .sidebar-header img {
+        width: 55px;
+        margin-bottom: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar-header img:hover {
+        transform: scale(1.05);
+    }
+
+    .sidebar-header h3 {
+        font-size: 16px;
+        color: #0b1220;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+    .sidebar-header p {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    /* =========================
+        MENU
+    ========================== */
+    .menu { 
+        list-style: none; 
+        margin-top: 25px; 
+        padding: 0; 
+    }
+
+    .menu li {
+        padding: 12px 14px; 
+        border-radius: 12px; 
+        margin: 6px 8px; 
+        cursor: pointer;
+        display: flex; 
+        gap: 12px; 
+        align-items: center; 
+        transition: all 0.3s ease;
+        color: var(--text);
+        font-size: 15px;
+        position: relative;
+    }
+
+    .menu li:hover { 
+        background: linear-gradient(135deg, #f3f6ff 0%, #eef5ff 100%);
+        transform: translateX(6px);
+        box-shadow: var(--shadow-light);
+    }
+
+    .active {
+        background: linear-gradient(135deg, #eef6ff 0%, #e8f1ff 100%);
+        color: var(--primary); 
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(26,92,255,0.15);
+        border-left: 4px solid var(--primary);
+    }
+
+    .menu li img { width: 22px; transition: opacity 0.3s ease; }
+    .menu li:hover img { opacity: 1; }
+
+    /* ============ SUBMENU ============ */
+    .submenu {
+        list-style: none;
+        padding-left: 45px;
+        margin: 0;
+        display: none;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+    }
+
+    .submenu.open { 
+        display: block; 
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .submenu li {
+        padding: 8px 0;
+        margin: 2px 0;
+        color: #6b7280;
+        font-size: 14px;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        border-radius: 8px;
+        padding: 8px 12px;
+    }
+
+    .submenu li:hover {
+        background: linear-gradient(135deg, #f3f6ff 0%, #eef5ff 100%);
+        color: var(--primary);
+    }
+
+    .submenu li.active {
+        background: linear-gradient(135deg, #eef6ff 0%, #e8f1ff 100%);
+        color: var(--primary);
+        font-weight: 600;
+        box-shadow: var(--shadow-light);
+    }
+
+    /* =========================
+        COLLAPSE BUTTON
+    ========================== */
+    .collapse-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #ffffff 0%, #f9fbfc 100%);
+        color: var(--text);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 16px;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        z-index: 999;
+    }
+
+    .collapse-btn:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-medium);
+    }
+
+    /* COLLAPSED SIDEBAR */
+    .sidebar.collapsed { width: 70px; padding: 24px 10px; }
+    .sidebar.collapsed .sidebar-header { display: none; }
+    .sidebar.collapsed .menu li span { display: none; }
+    .sidebar.collapsed .submenu { display: none !important; }
+    .sidebar.collapsed .menu li { justify-content: center; }
+
+    /* geser main-content */
+    .sidebar.collapsed ~ .main-content { margin-left: 70px !important; }
+    /* HEADER IKUT GESER SAAT SIDEBAR COLLAPSE */
+    .sidebar.collapsed ~ .main-content .header { left: 70px !important; }
+
+    .sidebar-body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+
+    .sidebar-body .menu {
+        flex: 1;
+    }
+
+    /* ==== USER ACCOUNT (mirip ChatGPT — rapi & horizontal) ==== */
+    .user-account {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card);
+        padding: 14px 16px;
+        border-top: 1px solid #e5e7eb;
+        cursor: pointer;
+        position: relative;
+        margin-top: auto;
+        transition: background 0.3s ease;
+    }
+
+    .user-account:hover {
+        background: linear-gradient(135deg, #f8f9fb 0%, #f1f6ff 100%);
+    }
+
+    /* kiri: foto + teks */
+    .ua-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    /* avatar bulat */
+    .ua-photo {
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg, #1a5cff 0%, #3b82f6 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 600;
+        box-shadow: var(--shadow-light);
+    }
+
+    /* tulisan */
+    .ua-info { display: flex; flex-direction: column; }
+
+    .ua-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .ua-role {
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    /* caret (panah) */
+    .ua-caret {
+        font-size: 14px;
+        color: #6b7280;
+        transition: transform 0.3s ease;
+    }
+
+    .user-account:hover .ua-caret {
+        transform: rotate(180deg);
+    }
+
+    /* === DROPDOWN === */
+    .ua-dropdown {
+        position: absolute;
+        bottom: 65px;
+        left: 10px;
+        width: 180px;
+        background: var(--card);
+        border-radius: 14px;
+        padding: 8px 0;
+        display: none;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid #e5e7eb;
+    }
+
+    .ua-dropdown a {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: #1f2937;
+        font-size: 14px;
+        line-height: 1;
+        transition: background 0.3s ease;
+    }
+
+    .ua-dropdown a:hover {
+        background: linear-gradient(135deg, #f3f4f6 0%, #eef5ff 100%);
+    }
+
+    .logout-btn {
+        color: #dc2626 !important;
+        font-weight: 600;
+    }
+
+    .logout-icon {
+        width: 18px;
+        opacity: 0.85;
+    }
+
+    /* Saat sidebar collapse — sembunyikan nama & role */
+    .sidebar.collapsed .ua-info {
+        display: none;
+    }
+
+    /* Kecilkan avatar biar proporsional */
+    .sidebar.collapsed .ua-photo {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    /* Geser panah caret agar tetap rapi di kanan avatar */
+    .sidebar.collapsed .ua-caret {
+        display: none;
+    }
+
+    /* Ratakan user-account ke tengah */
+    .sidebar.collapsed .user-account {
+        justify-content: center;
+        padding: 16px 0;
+    }
+
+    /* =========================
+            MAIN CONTENT
+        ========================== */
+    .main-content {
+        margin-left: 260px;
+        padding-top: 120px;
+        padding-left: 40px;
+        width: calc(100% - 260px - 40px - 2px);
+        box-sizing: border-box; 
+        transition: .3s ease;
+        
+    }
+
+    .header {
+        position: fixed;
+        top: 0;
+        left: 260px;
+        right: 0;
+        background: var(--bg);
+        padding: 24px 40px;
+        border-bottom: 1px solid #cdd3e1;
+        z-index: 999;
+        transition: .3s ease;
+        box-shadow: var(--shadow-light);
+    }
+
+    .header-top {
+        display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .bps-logo { width: 70px; height: 55px; object-fit: cover; border-radius: 8px; box-shadow: var(--shadow-light); }
+
+    .bps-title { font-size: 20px; font-weight: 600; color: #0093dd; }
+    .bps-subtitle { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #111827;
+        padding-top: 20px;
+    }
+
+    .page-sub {
+        font-size: 15px;
+        color: var(--muted);
+        margin-bottom: 24px;
+    }
+
+    .box {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid rgba(16,24,40,0.04);
+    }
+
+    .top-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        border: 1px solid #d1d5db;
+        background: var(--card);
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-light);
+    }
+
+    .btn:hover {
+        background: linear-gradient(135deg, #f3f4f6 0%, #eef5ff 100%);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #1a5cff 0%, #3b82f6 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(26,92,255,0.22);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0d44d6 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 18px rgba(26,92,255,0.32);
+    }
+
+    .search-box {
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        padding: 14px 20px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e3e6ef;
+        box-shadow: var(--shadow-light);
+    }
+
+    .search-box input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 14px;
+        width: 100%;
+    }
+
+    /* REPORT LIST */
+    .report-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .report-item {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--shadow-light);
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+
+    .report-item:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .report-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 10px;
+    }
+
+    .report-info {
+        font-size: 14px;
+        color: var(--muted);
+        margin-bottom: 15px;
+    }
+
+    .report-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .report-actions button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .download-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .download-btn:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    }
+
+    .delete-btn {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .delete-btn:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        text-align: center;
+        color: var(--muted);
+        font-size: 16px;
+        padding: 40px 20px;
+    }
+
+    /* MODALS */
+    .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.25);
+        backdrop-filter: blur(4px);
+        z-index: 99999;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+        width: 500px;
+        background: linear-gradient(135deg, #ffffff 0%, #f9fbfc 100%);
+        backdrop-filter: blur(8px);
+        padding: 28px;
+        border-radius: 18px;
+        box-shadow: var(--shadow-heavy);
+        animation: scaleIn 0.25s ease;
+    }
+
+    @keyframes scaleIn {
+        from { transform: scale(0.92); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .closeBtn {
+        float: right;
+        font-size: 20px;
+        cursor: pointer;
+        color: #6b7280;
+        transition: 0.2s;
+    }
+
+    .closeBtn:hover { color: #ef4444; }
+
+        .modal-content h2 {
+        margin-top: 5px;
+        margin-bottom: 16px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #111827;
+        letter-spacing: .3px;
+    }
+
+    .upload-box {
+        border: 2px dashed #b9c4d8;
+        padding: 40px 20px;
+        text-align: center;
+        border-radius: 12px;
+        cursor: pointer;
+        margin-bottom: 18px;
+        transition: .3s ease;
+        background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
+    }
+
+    .upload-box:hover {
+        background: linear-gradient(135deg, #f0f4ff 0%, #e8f1ff 100%);
+        border-color: #7da4ff;
+    }
+
+    .upload-box p {
+        font-size: 15px;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .upload-box small {
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    .modal-footer {
+        text-align: right;
+        margin-top: 10px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .cancelBtn {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 400;
+        color: #374151;
+        transition: .3s ease;
+    }
+
+    .cancelBtn:hover {
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    }
+
+    .uploadBtn {
+        background: linear-gradient(135deg, #1a5cff 0%, #3b82f6 100%);
+        color: white;
+        padding: 9px 18px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: .3s ease;
+        box-shadow: 0 4px 12px rgba(26,92,255,0.22);
+    }
+
+    .uploadBtn:hover {
+        background: linear-gradient(135deg, #0d44d6 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 15px rgba(26,92,255,0.32);
+    }
+
+    /* HIDDEN INPUT FOR FOLDER UPLOAD */
+    #folderInput {
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+
+    <div class="collapse-btn" id="toggleSidebar">❮</div>
+
+    <!-- SIDEBAR HEADER BARU -->
+    <div class="sidebar-header">
+        <img src="gambar/logo.png" alt="Logo BPS">
+        <h3>BPS Kota Pontianak</h3>
+        <p>Kepegawaian Internal</p>
+    </div>
+
+    <div class="sidebar-body">
+    <ul class="menu">
+
+        <li onclick="window.location.href='dashboard.html'">
+            <img src="gambar/homee.png" alt="Dashboard">
+            <span>Dashboard</span>
+        </li>
+        <li class="subbag-item" data-submenu="kepegawaian">
+        <img src="gambar/simpegg.png">
+        <span>Kepegawaian</span>
+    </li>
+    <ul class="submenu" id="kepegawaian">
+        <li onclick="window.location.href='kepegawaianSdm.html'">SDM</li>
+        <li onclick="window.location.href='kepegawaianFungsional.html'">Fungsional</li>
+        <li onclick="window.location.href='kepegawaianKgb.html'">KGB</li>
+        <li onclick="window.location.href='kepegawaianKp.html'">KP</li>
+        <li onclick="window.location.href='kepegawaianPppk.html'">PPPK</li>
+    </ul>
+
+    <!-- KEUANGAN -->
+    <li class="subbag-item" data-submenu="keuangan">
+        <img src="gambar/keuangan.jpg">
+        <span>Keuangan</span>
+    </li>
+    <ul class="submenu" id="keuangan">
+        <li onclick="window.location.href='spider.html'">Spider</li>
+        <li onclick="window.location.href='bos.html'">BOS</li>
+        <li onclick="window.location.href='sakti.html'">Sakti</li>
+        <li onclick="window.location.href='omspan.html'">OM SPAN</li>
+        <li onclick="window.location.href='sirup.html'">SIRUP</li>
+    </ul>
+
+    <!-- SAKIP -->
+    <li onclick="window.location.href='sakip.html'">
+        <img src="gambar/sakipp.png">
+        <span>Sakip</span>
+    </li>
+
+    <!-- LAPORAN -->
+    <li onclick="window.location.href='laporan.html'">
+        <img src="gambar/lakinn.png">
+        <span>Laporan</span>
+    </li>
+
+    </ul>
+    </div>
+    <div class="user-account" id="userAccountBtn">
+    <div class="ua-left">
+        <div class="ua-photo">KS</div>
+
+        <div class="ua-info">
+            <div class="ua-name">Kepala Sub Bagian</div>
+            <div class="ua-role">Administrator</div>
+        </div>
+    </div>
+
+    <div class="ua-caret">▾</div>
+
+    <div class="ua-dropdown" id="accountDropdown">
+        <a class="logout-btn" id="logoutDropdown">
+            <img src="gambar/logout.svg" class="logout-icon" alt="Logout"> Logout
+        </a>
+    </div>
+</div>
+</div>
+
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <div class="header">
+        <div class="header-top" style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="header-left" style="display:flex;align-items:center;gap:16px;">
+                <img src="gambar/logo.png" class="bps-logo" alt="Logo BPS">
+                <div>
+                <h2 class="bps-title">Badan Pusat Statistik<br>Kota Pontianak</h2>
+                <p class="bps-subtitle">Sistem Informasi Kepegawaian Internal</p>
+            </div>
+            </div>
+        </div>
+    </div>
+    <h1 class="page-title">Kepegawaian - Data PPPK</h1>
+    <p class="page-sub">Kelola laporan PPPK dengan mengupload folder, menampilkan, menghapus, atau mendownload</p>
+
+   <div class="box">
+    <div class="top-actions">
+        <button id="uploadFolderBtn" class="btn btn-primary">+ Upload Folder</button>
+    </div>
+
+    <div class="search-box">
+        <img src="gambar/search.png" width="18" alt="Search">
+        <input type="text" placeholder="Cari laporan..." id="searchInput">
+    </div>
+
+    <div class="report-list" id="reportList">
+        <!-- Laporan akan dimuat dari localStorage -->
+    </div>
+    </div>
+</div>
+
+<!-- POPUP UPLOAD FOLDER -->
+<div id="uploadFolderModal" class="modal">
+    <div class="modal-content">
+        <span class="closeBtn">&times;</span>
+        <h2>Upload Folder Laporan PPPK</h2>
+        <div id="uploadArea" class="upload-box">
+            <div class="upload-icon">📁</div>
+            <p>Klik untuk memilih folder</p>
+            <small>Folder akan diupload sebagai laporan</small>
+        </div>
+        <div class="modal-footer">
+            <button class="cancelBtn">Batal</button>
+            <button class="uploadBtn">Upload</button>
+        </div>
+        <input type="file" id="folderInput" webkitdirectory multiple hidden>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // LOGIN PROTECT
+        if (sessionStorage.getItem("isLogin") !== "true") {
+            window.location.href = "login.html";
+        }
+
+        /* SIDEBAR COLLAPSE */
+        const sidebar = document.getElementById("sidebar");
+        const toggleBtn = document.getElementById("toggleSidebar");
+
+        toggleBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("collapsed");
+            toggleBtn.innerHTML = sidebar.classList.contains("collapsed") ? "❯" : "❮";
+        });
+
+        /* SUBMENU ACCORDION */
+        const submenus = document.querySelectorAll(".submenu");
+        const items = document.querySelectorAll(".subbag-item");
+
+        items.forEach(item => {
+            item.addEventListener("click", () => {
+                const target = document.getElementById(item.dataset.submenu);
+
+                submenus.forEach(menu => {
+                    if (menu !== target) menu.classList.remove("open");
+                });
+
+                target.classList.toggle("open");
+            });
+        });
+
+        /* DETEKSI HALAMAN AKTIF DAN BUKA SUBMENU */
+        const currentPage = window.location.pathname.split('/').pop();
+        const submenuItems = document.querySelectorAll('.submenu li');
+
+        submenuItems.forEach(item => {
+            const onclickAttr = item.getAttribute('onclick');
+            if (onclickAttr && onclickAttr.includes(currentPage)) {
+                item.classList.add('active');
+                const submenu = item.closest('.submenu');
+                submenu.classList.add('open');
+            }
+        });
+
+        // DATA MANAGEMENT - Array of reports: {name, files: [{name, data}], uploadDate}
+        let PppkReports = JSON.parse(localStorage.getItem('PppkReports')) || [];
+
+        const reportList = document.getElementById('reportList');
+
+        // Function to render report list
+        function renderReports(reports) {
+            reportList.innerHTML = '';
+            if (reports.length === 0) {
+                reportList.innerHTML = '<div class="empty-state">Belum ada laporan. Klik tombol "Upload Folder" untuk menambahkan laporan baru.</div>';
+                return;
+            }
+            reports.forEach((report, index) => {
+                const reportItem = document.createElement('div');
+                reportItem.className = 'report-item';
+                reportItem.innerHTML = `
+                    <div class="report-name">${report.name}</div>
+                    <div class="report-info">Diupload: ${new Date(report.uploadDate).toLocaleDateString('id-ID')} | ${report.files.length} file(s)</div>
+                    <div class="report-actions">
+                        <button class="download-btn" data-index="${index}">Download</button>
+                        <button class="delete-btn" data-index="${index}">Hapus</button>
+                    </div>
+                `;
+                reportList.appendChild(reportItem);
+            });
+        }
+
+        // Load reports on page load
+        renderReports(PppkReports);
+
+        // UPLOAD FOLDER MODAL
+        const modal = document.getElementById("uploadFolderModal");
+        const uploadBtn = document.getElementById("uploadFolderBtn");
+        const closeBtn = document.querySelector(".closeBtn");
+        const uploadArea = document.getElementById("uploadArea");
+        const folderInput = document.getElementById("folderInput");
+        let selectedFiles = [];
+
+        uploadBtn.addEventListener('click', () => {
+            modal.style.display = "flex";
+        });
+
+        closeBtn.onclick = () => modal.style.display = "none";
+        document.querySelector(".cancelBtn").onclick = () => modal.style.display = "none";
+        window.onclick = (e) => { if (e.target == modal) modal.style.display = "none"; };
+
+        uploadArea.addEventListener('click', () => {
+            folderInput.click();
+        });
+
+        folderInput.addEventListener('change', (event) => {
+            selectedFiles = Array.from(event.target.files);
+            if (selectedFiles.length > 0) {
+                const folderName = selectedFiles[0].webkitRelativePath.split('/')[0];
+                uploadArea.innerHTML = `
+                    <div class="upload-icon">📁</div>
+                    <p>Folder: ${folderName}</p>
+                    <small>${selectedFiles.length} file(s) dipilih</small>
+                `;
+            }
+        });
+
+        document.querySelector(".uploadBtn").addEventListener('click', () => {
+            if (selectedFiles.length === 0) {
+                alert("Pilih folder terlebih dahulu!");
+                return;
+            }
+
+            const folderName = selectedFiles[0].webkitRelativePath.split('/')[0];
+            const reportName = prompt("Masukkan nama laporan:", folderName);
+            if (!reportName) return;
+
+            // Check if report name already exists
+            if (PppkReports.some(r => r.name === reportName)) {
+                alert("Nama laporan sudah ada! Gunakan nama yang berbeda.");
+                return;
+            }
+
+            const files = selectedFiles.map(file => ({
+                name: file.name,
+                data: file // Store file object for download
+            }));
+
+            const newReport = {
+                name: reportName,
+                files: files,
+                uploadDate: new Date().toISOString()
+            };
+
+            PppkReports.push(newReport);
+            localStorage.setItem('PppkReports', JSON.stringify(PppkReports));
+            renderReports(PppkReports);
+
+            modal.style.display = "none";
+            uploadArea.innerHTML = `
+                <div class="upload-icon">📁</div>
+                <p>Klik untuk memilih folder</p>
+                <small>Folder akan diupload sebagai laporan</small>
+            `;
+            folderInput.value = "";
+            selectedFiles = [];
+            alert("Laporan berhasil diupload!");
+        });
+
+        // DOWNLOAD REPORT
+        reportList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('download-btn')) {
+                const index = parseInt(e.target.dataset.index);
+                const report = PppkReports[index];
+
+                const zip = new JSZip();
+                report.files.forEach(file => {
+                    zip.file(file.name, file.data);
+                });
+
+                zip.generateAsync({ type: "blob" }).then(function(content) {
+                    saveAs(content, `${report.name}.zip`);
+                });
+            }
+        });
+
+        // DELETE REPORT
+        reportList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                const index = parseInt(e.target.dataset.index);
+                if (confirm("Apakah Anda yakin ingin menghapus laporan ini?")) {
+                    PppkReports.splice(index, 1);
+                    localStorage.setItem('PppkReports', JSON.stringify(PppkReports));
+                    renderReports(PppkReports);
+                }
+            }
+        });
+
+        // SEARCH FUNCTION
+        const searchInput = document.getElementById("searchInput");
+
+        searchInput.addEventListener("input", function() {
+            const keyword = this.value.toLowerCase().trim();
+            const filteredReports = PppkReports.filter(report =>
+                report.name.toLowerCase().includes(keyword)
+            );
+            renderReports(filteredReports);
+        });
+
+        // USER ACCOUNT DROPDOWN
+        document.getElementById("userAccountBtn").addEventListener("click", function () {
+            const drop = document.getElementById("accountDropdown");
+            drop.style.display = drop.style.display === "block" ? "none" : "block";
+        });
+
+        document.addEventListener("click", function(e){
+            const btn = document.getElementById("userAccountBtn");
+            const drop = document.getElementById("accountDropdown");
+
+            if (!btn.contains(e.target) && !drop.contains(e.target)) {
+                drop.style.display = "none";
+            }
+        });
+
+        // Logout
+        document.getElementById("logoutDropdown").addEventListener("click", function(){
+            sessionStorage.clear();
+            window.location.href = "login.html";
+        });
+    });
+</script>
+</body>
+</html>

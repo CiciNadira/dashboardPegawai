@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kepegawaian - Data Fungsional</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap" rel="stylesheet">
+    <!-- Tambahkan CDN untuk SheetJS (xlsx) untuk memproses file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+   <style>
+    :root {
+        --bg: linear-gradient(135deg, #f4f6f9 0%, #e9ecef 100%);
+        --card: linear-gradient(135deg, #ffffff 0%, #f9fbfc 100%);
+        --muted: #6b7280;
+        --primary: #1a5cff;
+        --accent: #e8f1ff;
+        --soft: #f1f6ff;
+        --text: #111827;
+        --glass: rgba(10,25,80,0.04);
+        --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.1);
+        --shadow-heavy: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', ui-sans-serif; }
+    body { background: var(--bg); display: flex; color: var(--text); font-size: 15px; height: 100vh; }
+
+    /* =========================
+        SIDEBAR
+    ========================== */
+    .sidebar {
+        width: 260px;
+        background: var(--card);
+        height: 100vh;
+        box-shadow: var(--shadow-medium);
+        padding: 24px 20px 28px;
+        position: fixed;
+        left: 0;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        transition: .3s ease;
+        padding-bottom: 0;
+        border-right: 1px solid #e5e7eb;
+    }
+
+    /* ===== SIDEBAR HEADER ===== */
+    .sidebar-header {
+        text-align: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .sidebar-header img {
+        width: 55px;
+        margin-bottom: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar-header img:hover {
+        transform: scale(1.05);
+    }
+
+    .sidebar-header h3 {
+        font-size: 16px;
+        color: #0b1220;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+    .sidebar-header p {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    /* =========================
+        MENU
+    ========================== */
+    .menu { 
+        list-style: none; 
+        margin-top: 25px; 
+        padding: 0; 
+    }
+
+    .menu li {
+        padding: 12px 14px; 
+        border-radius: 12px; 
+        margin: 6px 8px; 
+        cursor: pointer;
+        display: flex; 
+        gap: 12px; 
+        align-items: center; 
+        transition: all 0.3s ease;
+        color: var(--text);
+        font-size: 15px;
+        position: relative;
+    }
+
+    .menu li:hover { 
+        background: linear-gradient(135deg, #f3f6ff 0%, #eef5ff 100%);
+        transform: translateX(6px);
+        box-shadow: var(--shadow-light);
+    }
+
+    .active {
+        background: linear-gradient(135deg, #eef6ff 0%, #e8f1ff 100%);
+        color: var(--primary); 
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(26,92,255,0.15);
+        border-left: 4px solid var(--primary);
+    }
+
+    .menu li img { width: 22px; transition: opacity 0.3s ease; }
+    .menu li:hover img { opacity: 1; }
+
+    /* ============ SUBMENU ============ */
+    .submenu {
+        list-style: none;
+        padding-left: 45px;
+        margin: 0;
+        display: none;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+    }
+
+    .submenu.open { 
+        display: block; 
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .submenu li {
+        padding: 8px 0;
+        margin: 2px 0;
+        color: #6b7280;
+        font-size: 14px;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        border-radius: 8px;
+        padding: 8px 12px;
+    }
+
+    .submenu li:hover {
+        background: linear-gradient(135deg, #f3f6ff 0%, #eef5ff 100%);
+        color: var(--primary);
+    }
+
+    .submenu li.active {
+        background: linear-gradient(135deg, #eef6ff 0%, #e8f1ff 100%);
+        color: var(--primary);
+        font-weight: 600;
+        box-shadow: var(--shadow-light);
+    }
+
+    /* =========================
+        COLLAPSE BUTTON
+    ========================== */
+    .collapse-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #ffffff 0%, #f9fbfc 100%);
+        color: var(--text);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 16px;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        z-index: 999;
+    }
+
+    .collapse-btn:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-medium);
+    }
+
+    /* COLLAPSED SIDEBAR */
+    .sidebar.collapsed { width: 70px; padding: 24px 10px; }
+    .sidebar.collapsed .sidebar-header { display: none; }
+    .sidebar.collapsed .menu li span { display: none; }
+    .sidebar.collapsed .submenu { display: none !important; }
+    .sidebar.collapsed .menu li { justify-content: center; }
+
+    /* geser main-content */
+    .sidebar.collapsed ~ .main-content { margin-left: 70px !important; }
+    /* HEADER IKUT GESER SAAT SIDEBAR COLLAPSE */
+    .sidebar.collapsed ~ .main-content .header { left: 70px !important; }
+
+    .sidebar-body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+
+    .sidebar-body .menu {
+        flex: 1;
+    }
+
+    /* ==== USER ACCOUNT (mirip ChatGPT — rapi & horizontal) ==== */
+    .user-account {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card);
+        padding: 14px 16px;
+        border-top: 1px solid #e5e7eb;
+        cursor: pointer;
+        position: relative;
+        margin-top: auto;
+        transition: background 0.3s ease;
+    }
+
+    .user-account:hover {
+        background: linear-gradient(135deg, #f8f9fb 0%, #f1f6ff 100%);
+    }
+
+    /* kiri: foto + teks */
+    .ua-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    /* avatar bulat */
+    .ua-photo {
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg, #1a5cff 0%, #3b82f6 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 600;
+        box-shadow: var(--shadow-light);
+    }
+
+    /* tulisan */
+    .ua-info { display: flex; flex-direction: column; }
+
+    .ua-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .ua-role {
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    /* caret (panah) */
+    .ua-caret {
+        font-size: 14px;
+        color: #6b7280;
+        transition: transform 0.3s ease;
+    }
+
+    .user-account:hover .ua-caret {
+        transform: rotate(180deg);
+    }
+
+    /* === DROPDOWN === */
+    .ua-dropdown {
+        position: absolute;
+        bottom: 65px;
+        left: 10px;
+        width: 180px;
+        background: var(--card);
+        border-radius: 14px;
+        padding: 8px 0;
+        display: none;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid #e5e7eb;
+    }
+
+    .ua-dropdown a {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: #1f2937;
+        font-size: 14px;
+        line-height: 1;
+        transition: background 0.3s ease;
+    }
+
+    .ua-dropdown a:hover {
+        background: linear-gradient(135deg, #f3f4f6 0%, #eef5ff 100%);
+    }
+
+    .logout-btn {
+        color: #dc2626 !important;
+        font-weight: 600;
+    }
+
+    .logout-icon {
+        width: 18px;
+        opacity: 0.85;
+    }
+
+    /* Saat sidebar collapse — sembunyikan nama & role */
+    .sidebar.collapsed .ua-info {
+        display: none;
+    }
+
+    /* Kecilkan avatar biar proporsional */
+    .sidebar.collapsed .ua-photo {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    /* Geser panah caret agar tetap rapi di kanan avatar */
+    .sidebar.collapsed .ua-caret {
+        display: none;
+    }
+
+    /* Ratakan user-account ke tengah */
+    .sidebar.collapsed .user-account {
+        justify-content: center;
+        padding: 16px 0;
+    }
+
+    /* =========================
+            MAIN CONTENT
+        ========================== */
+    .main-content {
+        margin-left: 260px;
+        padding-top: 120px;
+        padding-left: 40px;
+        width: calc(100% - 260px - 40px - 2px);
+        box-sizing: border-box; 
+        transition: .3s ease;
+        
+    }
+
+    .header {
+        position: fixed;
+        top: 0;
+        left: 260px;
+        right: 0;
+        background: var(--bg);
+        padding: 24px 40px;
+        border-bottom: 1px solid #cdd3e1;
+        z-index: 999;
+        transition: .3s ease;
+        box-shadow: var(--shadow-light);
+    }
+
+    .header-top {
+        display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .bps-logo { width: 70px; height: 55px; object-fit: cover; border-radius: 8px; box-shadow: var(--shadow-light); }
+
+    .bps-title { font-size: 20px; font-weight: 600; color: #0093dd; }
+    .bps-subtitle { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #111827;
+        padding-top: 20px;
+    }
+
+    .page-sub {
+        font-size: 15px;
+        color: var(--muted);
+        margin-bottom: 24px;
+    }
+
+    .box {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid rgba(16,24,40,0.04);
+    }
+
+    .top-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        border: 1px solid #d1d5db;
+        background: var(--card);
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-light);
+    }
+
+    .btn:hover {
+        background: linear-gradient(135deg, #f3f4f6 0%, #eef5ff 100%);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #1a5cff 0%, #3b82f6 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(26,92,255,0.22);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0d44d6 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 18px rgba(26,92,255,0.32);
+    }
+
+    .search-box {
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        padding: 14px 20px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e3e6ef;
+        box-shadow: var(--shadow-light);
+    }
+
+    .search-box input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 14px;
+        width: 100%;
+    }
+
+    /* TABLE */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow-light);
+        text-align: center;
+    }
+    .table-responsive {
+        overflow-x: auto; 
+        width: 100%;
+        /* Atur padding-bottom agar scrollbar terlihat jelas */
+        padding-bottom: 12px; 
+    }
+
+    th {
+        text-align: center;
+        padding: 16px 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #383a3e;
+        border-bottom: 1px solid #e5e7eb;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    }
+
+    td {
+        padding: 18px 12px;
+        font-size: 15px;
+        border-bottom: 1px solid #e5e7eb;
+        transition: background 0.3s ease;
+    }
+
+    tr:hover td {
+        background: linear-gradient(135deg, #f9fafb 0%, #f1f6ff 100%);
+    }
+
+    .status-active {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #047857;
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .aksi-btn {
+        cursor: pointer;
+        font-size: 16px;
+        margin-right: 10px;
+        width: 18px;
+        height: 18px;
+        object-fit: contain;
+        opacity: 0.8;
+        transition: all 0.3s ease;
+    }
+
+    .aksi-btn:hover {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        text-align: center;
+        color: var(--muted);
+        font-size: 16px;
+        padding: 40px 20px;
+    }
+
+    /* HIDDEN INPUT FOR FILE UPLOAD */
+    #fileInput {
+        display: none;
+    }
+
+    /* MODALS */
+    .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.25);
+        backdrop-filter: blur(4px);
+        z-index: 99999;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+            width: 540px;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fbfc 100%);
+            backdrop-filter: blur(8px);
+            padding: 28px;
+            border-radius: 18px;
+            box-shadow: var(--shadow-heavy);
+            animation: scaleIn 0.25s ease;
+        }
+
+    @keyframes scaleIn {
+        from { transform: scale(0.92); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .closeBtn {
+        float: right;
+        font-size: 20px;
+        cursor: pointer;
+        color: #6b7280;
+        transition: 0.2s;
+    }
+
+    .closeBtn:hover { color: #ef4444; }
+
+    .modal-content h2 {
+        margin-top: 5px;
+        margin-bottom: 16px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #111827;
+        letter-spacing: .3px;
+    }
+
+    .format-box {
+        background: linear-gradient(135deg, #f5f7ff 0%, #eef5ff 100%);
+        border: 1px solid #dbe3ff;
+        padding: 18px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .format-box p {
+        font-size: 14px;
+        margin-bottom: 6px;
+        color: #374151;
+        font-weight: 400;
+    }
+
+    .tag-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .tag {
+        background: linear-gradient(135deg, #e6ebff 0%, #dbe3ff 100%);
+        color: #010213;
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .template-link {
+        display: inline-block;
+        margin-top: 12px;
+        font-weight: 400;
+        text-decoration: none;
+        font-size: small;
+        color: var(--primary);
+        transition: color 0.3s ease;
+    }
+
+    .template-link:hover {
+        color: #0d44d6;
+        text-decoration: underline;
+    }
+
+    .upload-box {
+        border: 2px dashed #b9c4d8;
+        padding: 40px 20px;
+        text-align: center;
+        border-radius: 12px;
+        cursor: pointer;
+        margin-bottom: 18px;
+        transition: .3s ease;
+        background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
+    }
+
+    .upload-box:hover {
+        background: linear-gradient(135deg, #f0f4ff 0%, #e8f1ff 100%);
+        border-color: #7da4ff;
+    }
+
+    .upload-box p {
+        font-size: 15px;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .upload-box small {
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    .preview-area-box {
+        max-height: 260px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: var(--card);
+    }
+
+    .modal-footer {
+        text-align: right;
+        margin-top: 10px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .cancelBtn {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 400;
+        color: #374151;
+        transition: .3s ease;
+    }
+
+    .cancelBtn:hover {
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    }
+
+    .importDataBtn {
+        background: linear-gradient(135deg, #1a5cff 0%, #3b82f6 100%);
+        color: white;
+        padding: 9px 18px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: .3s ease;
+        box-shadow: 0 4px 12px rgba(26,92,255,0.22);
+    }
+
+    .importDataBtn:hover {
+        background: linear-gradient(135deg, #0d44d6 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 15px rgba(26,92,255,0.32);
+    }
+
+    /* === POPUP TAMBAH DATA (MODERN SOFT UI) === */
+    #addDataModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.25);
+        backdrop-filter: blur(4px);
+        z-index: 99999;
+        justify-content: center;
+        align-items: center;
+        padding-top: 500px;
+        overflow-y: auto; 
+        padding-right: 10px;
+        
+    }
+
+
+    .add-modal-content {
+        width: 600px; /* Lebih lebar untuk field tambahan */
+        background: var(--card);
+        padding: 28px;
+        border-radius: 18px;
+        box-shadow: var(--shadow-heavy);
+        animation: fadeUp .25s ease;
+        margin-top: 50px;
+        scrollbar-width: thin;
+        max-height: 85vh;      /* KUNCI */
+        overflow-y: auto;
+    }
+
+    @keyframes fadeUp {
+        from { opacity:0; transform:translateY(20px); }
+        to { opacity:1; transform:translateY(0); }
+    }
+
+    .add-modal-content h2 {
+        margin-bottom: 18px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .closeAddBtn {
+        float: right;
+        cursor: pointer;
+        font-size: 22px;
+        color: #9CA3AF;
+        transition: .2s;
+    }
+
+    .closeAddBtn:hover {
+        color: #EF4444;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        font-size: 14px;
+        transition: .3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        background: var(--card);
+        border-color: #60a5fa;
+        box-shadow: 0 0 8px rgba(96,165,250,0.25);
+    }
+
+    .add-footer {
+        margin-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .add-cancel {
+        padding: 10px 18px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+        border: none;
+        cursor: pointer;
+        color: #374151;
+        font-size: 14px;
+        transition: .3s ease;
+    }
+
+    .add-cancel:hover {
+        background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+    }
+
+    .add-save {
+        padding: 10px 20px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #3b82f6 0%, #1a5cff 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+        transition: .3s ease;
+    }
+
+    .add-save:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #0d44d6 100%);
+        box-shadow: 0 6px 18px rgba(59,130,246,0.45);
+    }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+
+    <div class="collapse-btn" id="toggleSidebar">❮</div>
+
+    <!-- SIDEBAR HEADER BARU -->
+    <div class="sidebar-header">
+        <img src="gambar/logo.png" alt="Logo BPS">
+        <h3>BPS Kota Pontianak</h3>
+        <p>Kepegawaian Internal</p>
+    </div>
+
+    <div class="sidebar-body">
+    <ul class="menu">
+
+        <li onclick="window.location.href='dashboard.html'">
+            <img src="gambar/homee.png" alt="Dashboard">
+            <span>Dashboard</span>
+        </li>
+        <li class="subbag-item" data-submenu="kepegawaian">
+        <img src="gambar/simpegg.png">
+        <span>Kepegawaian</span>
+    </li>
+    <ul class="submenu" id="kepegawaian">
+        <li onclick="window.location.href='kepegawaianSdm.html'">SDM</li>
+        <li onclick="window.location.href='kepegawaianFungsional.html'"">Fungsional</li>
+        <li onclick="window.location.href='kepegawaianKgb.html'">KGB</li>
+        <li onclick="window.location.href='kepegawaianKp.html'">KP</li>
+        <li onclick="window.location.href='kepegawaianPppk.html'">PPPK</li>
+    </ul>
+
+    <!-- KEUANGAN -->
+    <li class="subbag-item" data-submenu="keuangan">
+        <img src="gambar/keuangan.jpg">
+        <span>Keuangan</span>
+    </li>
+    <ul class="submenu" id="keuangan">
+        <li onclick="window.location.href='spider.html'">Spider</li>
+        <li onclick="window.location.href='bos.html'">BOS</li>
+        <li onclick="window.location.href='sakti.html'">Sakti</li>
+        <li onclick="window.location.href='omspan.html'">OM SPAN</li>
+        <li onclick="window.location.href='sirup.html'">SIRUP</li>
+    </ul>
+
+    <!-- SAKIP -->
+    <li onclick="window.location.href='sakip.html'">
+        <img src="gambar/sakipp.png">
+        <span>Sakip</span>
+    </li>
+
+    <!-- LAPORAN -->
+    <li onclick="window.location.href='laporan.html'">
+        <img src="gambar/lakinn.png">
+        <span>Laporan</span>
+    </li>
+
+    </ul>
+    </div>
+    <div class="user-account" id="userAccountBtn">
+    <div class="ua-left">
+        <div class="ua-photo">KS</div>
+
+        <div class="ua-info">
+            <div class="ua-name">Kepala Sub Bagian</div>
+            <div class="ua-role">Administrator</div>
+        </div>
+    </div>
+
+    <div class="ua-caret">▾</div>
+
+    <div class="ua-dropdown" id="accountDropdown">
+        <a class="logout-btn" id="logoutDropdown">
+            <img src="gambar/logout.svg" class="logout-icon" alt="Logout"> Logout
+        </a>
+    </div>
+</div>
+</div>
+
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <div class="header">
+        <div class="header-top" style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="header-left" style="display:flex;align-items:center;gap:16px;">
+                <img src="gambar/logo.png" class="bps-logo" alt="Logo BPS">
+                <div>
+                <h2 class="bps-title">Badan Pusat Statistik<br>Kota Pontianak</h2>
+                <p class="bps-subtitle">Sistem Informasi Kepegawaian Internal</p>
+            </div>
+            </div>
+        </div>
+    </div>
+    <h1 class="page-title">Kepegawaian - Data Fungsional</h1>
+    <p class="page-sub">Kelola data dengan menambah, mengubah, atau menghapus informasi</p>
+
+   <div class="box">
+    <div class="top-actions">
+        <button id="importBtn" class="btn"><img src="gambar/import.png" alt="Import" width="16">Import Excel</button>
+        <button id="exportBtn" class="btn"><img src="gambar/export.png" alt="Export" width="16">Export Excel</button>
+        <button class="btn btn-primary" id="addDataBtn">+ Tambah Data</button>
+    </div>
+        <!-- POPUP IMPORT EXCEL -->
+        <div id="importExcelModal" class="modal">
+            <div class="modal-content">
+                <span class="closeBtn">&times;</span>
+                <h2>Import Data dari Excel</h2>
+                <!-- Format yang Dibutuhkan -->
+                <div class="format-box">
+                    <p><b>Format Excel yang Dibutuhkan:</b></p>
+                    <div class="tag-container">
+                        <span class="tag">Nama</span>
+                        <span class="tag">NIP</span>
+                        <span class="tag">Pangkat/Gol</span>
+                        <span class="tag">Jabatan</span>
+                        <span class="tag">TMT Fungsional</span>
+                        <span class="tag">AK Terakhir Angka</span>
+                        <span class="tag">AK Terakhir Tahun</span>
+                        <span class="tag">AK Konversi Angka</span>
+                        <span class="tag">AK Konversi Tahun</span>
+                        <span class="tag">Ket</span>
+                    </div>
+                    <a href="#" id="downloadTemplate" class="template-link">Download Template Excel</a>
+                </div>
+                <!-- Upload Area -->
+                <div id="uploadArea" class="upload-box">
+                    <div class="upload-icon">⬆</div>
+                    <p>Klik untuk memilih file Excel</p>
+                    <small>Format: .xlsx atau .xls</small>
+                </div>
+                <!-- Preview Area -->
+                <div id="previewArea" class="preview-area-box" style="display:none;">
+                    <table id="previewTable"></table>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancelBtn">Batal</button>
+                    <button class="importDataBtn">Import Data</button>
+                </div>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+            </div>
+        </div>
+
+            <!-- POPUP TAMBAH DATA (FINAL FIXED) -->
+            <div id="addDataModal" class="modal">
+                <div class="add-modal-content" style="max-width:600px;background:#fff;color:#111;">
+                    <span class="closeAddBtn" style="float:right;cursor:pointer;font-size:22px">&times;</span>
+                    <h2 id="formTitle"  style="margin-bottom:15px;font-weight:200">Tambah Data Fungsional</h2>
+                    <div class="form-group">
+                        <label>Nama</label>
+                        <input type="text" id="addNama" placeholder="Masukkan Nama Pegawai">
+                    </div>
+                    <div class="form-group">
+                        <label>NIP</label>
+                        <input type="text" id="addNip" placeholder="Masukkan NIP">
+                    </div>
+                    <div class="form-group">
+                        <label>Pangkat/Gol</label>
+                        <input type="text" id="addPangkatGol" placeholder="Masukkan Pangkat/Golongan">
+                    </div>
+                    <div class="form-group">
+                        <label>Jabatan</label>
+                        <input type="text" id="addJabatan" placeholder="Masukkan Jabatan">
+                    </div>
+                    <div class="form-group">
+                        <label>TMT Fungsional</label>
+                        <input type="date" id="addTmtFungsional" placeholder="Masukkan TMT Fungsional">
+                    </div>
+                    <div class="form-group">
+                        <label>AK Terakhir Angka</label>
+                        <input type="text" id="addAkTerakhirAngka" placeholder="Masukkan AK Terakhir Angka">
+                    </div>
+                    <div class="form-group">
+                        <label>AK Terakhir Tahun</label>
+                        <input type="text" id="addAkTerakhirTahun" placeholder="Masukkan AK Terakhir Tahun">
+                    </div>
+                    <div class="form-group">
+                        <label>AK Konversi Angka</label>
+                        <input type="text" id="addAkKonversiAngka" placeholder="Masukkan AK Konversi Angka">
+                    </div>
+                    <div class="form-group">
+                        <label>AK Konversi Tahun</label>
+                        <input type="text" id="addAkKonversiTahun" placeholder="Masukkan AK Konversi Tahun">
+                    </div>
+                    <div class="form-group">
+                        <label>Ket</label>
+                        <input type="text" id="addKet" placeholder="Masukkan Keterangan">
+                    </div>
+                    <div class="add-footer">
+                        <button class="add-cancel">Batal</button>
+                        <button class="add-save" id="saveDataBtn">Simpan</button>
+                    </div>
+            </div>
+
+            </div>
+
+<div class="search-box">
+    <img src="gambar/search.png" width="18" alt="Search">
+    <input type="text" placeholder="Cari data..." id="searchInput">
+</div>
+<div class="table-responsive">
+<table id="dataTable">
+    <thead>
+        <tr>
+            <th rowspan="2">NAMA</th>
+            <th rowspan="2">NIP</th>
+            <th rowspan="2">PANGKAT/GOL</th>
+            <th rowspan="2">JABATAN</th>
+            <th rowspan="2">TMT FUNGSIONAL</th>
+            <th colspan="2">AK TERAKHIR</th>
+            <th colspan="2">AK KONVERSI</th>
+            <th rowspan="2">KET</th>
+            <th rowspan="2">AKSI</th>
+        </tr>
+        <tr>
+            <th style="color: #6b7280;">Angka</th>
+            <th style="color: #6b7280;">Tahun</th>
+            <th style="color: #6b7280;">Angka</th>
+            <th style="color: #6b7280;">Tahun</th>
+        </tr>
+    </thead>
+    <tbody id="tableBody">
+        <!-- Data akan dimuat dari localStorage -->
+    </tbody>
+</table>
+
+    <tbody id="tableBody">
+        <!-- Data akan dimuat dari localStorage -->
+    </tbody>
+</table>
+</div>
+</div>
+</div>
+<script>
+    // Tambahkan fungsi ini di bagian atas script, sebelum event listener lainnya
+    function convertDMYtoYMD(dateStr) {
+        // Menerima DD/MM/YYYY atau DD-MM-YY(YY) atau bahkan angka excel
+        if (!dateStr || (typeof dateStr !== 'string' && typeof dateStr !== 'number')) return '';
+        let str = String(dateStr).trim();
+        let parts;
+        // Cek jika ini adalah angka serial Excel (misal: 45000) - asumsikan tanggal 1/1/1900
+        if (!isNaN(str) && str.length < 6) {
+             const excelDate = new Date(Date.UTC(1899, 11, 30));
+             excelDate.setUTCDate(excelDate.getUTCDate() + parseInt(str));
+             const year = excelDate.getFullYear();
+             const month = (excelDate.getMonth() + 1).toString().padStart(2, '0');
+             const day = excelDate.getDate().toString().padStart(2, '0');
+             return `${year}-${month}-${day}`;
+        }
+        // Cek jika format sudah YYYY-MM-DD (biarkan saja)
+        if (str.match(/^\d{4}-\d{2}-\d{2}$/)) return str;
+
+        // Ganti pemisah umum (slash, strip, dot) menjadi slash untuk parsing yang lebih mudah
+        str = str.replace(/[-\.]/g, '/');
+        parts = str.split('/');
+        // Jika panjangnya tidak 3, kembalikan string asli
+        if (parts.length !== 3) return dateStr; 
+        // Urutan: Day, Month, Year
+        let [day, month, year] = parts;
+        // Jika year hanya 2 digit, tambahkan "20"
+        if (year.length === 2) year = '20' + year;
+        // Pastikan format YYYY-MM-DD
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Fungsi untuk mengubah YYYY-MM-DD ke DD/MM/YYYY (hanya strip yang diproses)
+    function convertYMDtoDMY(dateStr) {
+        if (!dateStr || typeof dateStr !== 'string') return '';
+        
+        // Ganti semua separator (misal: /) menjadi - agar split dapat memproses YYYY/MM/DD
+        const normalizedStr = dateStr.replace(/\//g, '-'); 
+        const parts = normalizedStr.split('-');
+        
+        if (parts.length !== 3) return dateStr; // Jika format tidak sesuai, kembalikan asli
+        const [year, month, day] = parts;
+        return `${day}/${month}/${year}`;
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // LOGIN PROTECT (jalankan segera, tidak perlu di dalam DOMContentLoaded)
+    if (sessionStorage.getItem("isLogin") !== "true") {
+        window.location.href = "login.html";
+    }
+
+    /* SIDEBAR COLLAPSE */
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.getElementById("toggleSidebar");
+
+    toggleBtn.addEventListener("click", () => {
+        sidebar.classList.toggle("collapsed");
+        toggleBtn.innerHTML = sidebar.classList.contains("collapsed") ? "❯" : "❮";
+    });
+
+    /* SUBMENU ACCORDION */
+    const submenus = document.querySelectorAll(".submenu");
+    const items = document.querySelectorAll(".subbag-item");
+
+    items.forEach(item => {
+        item.addEventListener("click", () => {
+            const target = document.getElementById(item.dataset.submenu);
+
+            submenus.forEach(menu => {
+                if (menu !== target) menu.classList.remove("open");
+            });
+
+            target.classList.toggle("open");
+        });
+    });
+
+    /* DETEKSI HALAMAN AKTIF DAN BUKA SUBMENU */
+    const currentPage = window.location.pathname.split('/').pop(); // Ambil nama file halaman saat ini, misal 'kepegawaianSdm.html'
+    const submenuItems = document.querySelectorAll('.submenu li');
+
+    submenuItems.forEach(item => {
+        const onclickAttr = item.getAttribute('onclick');
+        if (onclickAttr && onclickAttr.includes(currentPage)) {
+            item.classList.add('active'); // Tandai item submenu aktif
+            const submenu = item.closest('.submenu');
+            submenu.classList.add('open'); // Buka submenu induk
+        }
+    });
+
+    // DATA MANAGEMENT - Ganti nama variabel data menjadi fungsionalData untuk sesuai halaman
+    let fungsionalData = JSON.parse(localStorage.getItem('fungsionalData')) || []; // Array of objects: {nama, nip, pangkatGol, jabatan, tmtFungsional, akTerakhirAngka, akTerakhirTahun, akKonversiAngka, akKonversiTahun, ket}
+
+    const tableBody = document.getElementById('tableBody');
+
+    // Function to render table (diubah untuk kolom baru)
+    function renderTable(data) {
+        tableBody.innerHTML = '';
+        if (data.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="11" class="empty-state">
+                        Belum ada data. Klik tombol "Tambah Data" untuk menambahkan data baru atau "Import Excel".
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        data.forEach((row, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${row.nama || ''}</td>
+                <td>${row.nip || ''}</td>
+                <td>${row.pangkatGol || ''}</td>
+                <td>${row.jabatan || ''}</td>
+                <td>${convertYMDtoDMY(row.tmtFungsional) || ''}</td>
+                <td>${row.akTerakhirAngka || ''}</td>
+                <td>${row.akTerakhirTahun || ''}</td>
+                <td>${row.akKonversiAngka || ''}</td>
+                <td>${row.akKonversiTahun || ''}</td>
+                <td>${row.ket || ''}</td>
+                <td>
+                    <img src="gambar/edit.png" class="aksi-btn edit" data-index="${index}" alt="Edit">
+                    <img src="gambar/hapuss.png" class="aksi-btn delete" data-index="${index}" alt="Delete">
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // Load data on page load
+    renderTable(fungsionalData);
+
+    // Variabel global untuk mode
+    let isEditMode = false;
+    let editingIndex = null;
+
+    // Fungsi untuk membuka modal tambah data
+    document.getElementById("addDataBtn").addEventListener("click", function () {
+        isEditMode = false;
+        editingIndex = null;
+
+        // Reset form
+        document.getElementById("addNama").value = "";
+        document.getElementById("addNip").value = "";
+        document.getElementById("addPangkatGol").value = "";
+        document.getElementById("addJabatan").value = "";
+        document.getElementById("addTmtFungsional").value = "";
+        document.getElementById("addAkTerakhirAngka").value = "";
+        document.getElementById("addAkTerakhirTahun").value = "";
+        document.getElementById("addAkKonversiAngka").value = "";
+        document.getElementById("addAkKonversiTahun").value = "";
+        document.getElementById("addKet").value = "";
+
+        // Ubah judul
+        document.getElementById("formTitle").innerText = "Tambah Data Fungsional";
+        document.getElementById("saveDataBtn").innerText = "Simpan";
+
+        // Atur padding khusus untuk mode tambah (lebih rendah)
+        document.getElementById("addDataModal").style.paddingTop = "2px";  
+        document.getElementById("addDataModal").style.paddingBottom = "10px";  
+        // Tampilkan modal
+        document.getElementById("addDataModal").style.display = "flex";
+    });
+
+    // Modifikasi fungsi untuk membuka modal edit data
+    function openEditModal(index) {
+        isEditMode = true;
+        editingIndex = index;
+        const data = fungsionalData[index];
+
+        // Isi form dengan data lama (tampilkan apa adanya, jangan kosongkan)
+        document.getElementById("addNama").value = data.nama || "";
+        document.getElementById("addNip").value = data.nip || "";
+        document.getElementById("addPangkatGol").value = data.pangkatGol || "";
+        document.getElementById("addJabatan").value = data.jabatan || "";
+        document.getElementById("addTmtFungsional").value = data.tmtFungsional || "";  
+        document.getElementById("addAkTerakhirAngka").value = data.akTerakhirAngka || "";
+        document.getElementById("addAkTerakhirTahun").value = data.akTerakhirTahun || "";
+        document.getElementById("addAkKonversiAngka").value = data.akKonversiAngka || "";
+        document.getElementById("addAkKonversiTahun").value = data.akKonversiTahun || "";
+        document.getElementById("addKet").value = data.ket || "";
+
+        // Ubah judul
+        document.getElementById("formTitle").innerText = "Edit Data Fungsional";
+        document.getElementById("saveDataBtn").innerText = "Update";
+
+        // Atur padding khusus untuk mode edit 
+        document.getElementById("addDataModal").style.paddingTop = "20px";  
+        document.getElementById("addDataModal").style.paddingBottom = "10px";  
+        // Tampilkan modal
+        document.getElementById("addDataModal").style.display = "flex";
+    }
+
+    // Event listener untuk tombol edit dan delete di tabel
+    tableBody.addEventListener("click", function(e) {
+        const index = parseInt(e.target.dataset.index);
+        if (isNaN(index)) return; // Pastikan index valid
+        if (e.target.classList.contains("edit")) {
+            openEditModal(index);
+        } else if (e.target.classList.contains("delete")) {
+            if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+                fungsionalData.splice(index, 1);
+                localStorage.setItem("fungsionalData", JSON.stringify(fungsionalData));
+                renderTable(fungsionalData);
+            }
+        }
+    });
+
+    // Event listener untuk simpan data
+    document.getElementById("saveDataBtn").addEventListener("click", function () {
+        const newData = {
+            nama: document.getElementById("addNama").value,
+            nip: document.getElementById("addNip").value,
+            pangkatGol: document.getElementById("addPangkatGol").value,
+            jabatan: document.getElementById("addJabatan").value,
+            tmtFungsional: document.getElementById("addTmtFungsional").value, // YYYY-MM-DD (VALID)
+            akTerakhirAngka: document.getElementById("addAkTerakhirAngka").value,
+            akTerakhirTahun: document.getElementById("addAkTerakhirTahun").value,
+            akKonversiAngka: document.getElementById("addAkKonversiAngka").value,
+            akKonversiTahun: document.getElementById("addAkKonversiTahun").value,
+            ket: document.getElementById("addKet").value
+        };
+
+        if (!newData.nama) {
+            alert("Nama wajib diisi!");
+            return;
+        }
+        if (!newData.nip) {
+            alert("NIP wajib diisi!");
+            return;
+        }
+
+        if (isEditMode) {
+            // *** PENANGANAN MODE EDIT DENGAN VALIDASI UNIK BARU ***
+            // Cek keunikan NIP (kecuali data yang sedang diedit)
+            const isNipDuplicate = fungsionalData.some((item, idx) => 
+                idx !== editingIndex && item.nip === newData.nip
+            );
+            if (isNipDuplicate) {
+                alert("NIP sudah digunakan oleh data lain! Gunakan NIP yang berbeda.");
+                return;
+            }
+            
+            // Update data
+            fungsionalData[editingIndex] = newData;
+
+        } else {
+            // Mode tambah: NIP wajib diisi dan unik
+            if (fungsionalData.some(item => item.nip === newData.nip)) {
+                alert("NIP sudah ada! Gunakan NIP yang berbeda.");
+                return;
+            }
+            fungsionalData.push(newData);
+        }
+
+        localStorage.setItem("fungsionalData", JSON.stringify(fungsionalData));
+        renderTable(fungsionalData);
+        document.getElementById("addDataModal").style.display = "none";
+    });
+
+    // Tutup modal
+    const closeAddBtn = document.querySelector(".closeAddBtn");
+    const cancelAddBtn = document.querySelector(".add-cancel");
+
+    closeAddBtn.addEventListener("click", () => {
+        document.getElementById("addDataModal").style.display = "none";
+    });
+
+    cancelAddBtn.addEventListener("click", () => {
+        document.getElementById("addDataModal").style.display = "none";
+    });
+
+    window.addEventListener("click", function(e) {
+        if (e.target === document.getElementById("addDataModal")) {
+            document.getElementById("addDataModal").style.display = "none";
+        }
+    });
+
+    /* ======================================================
+        FUNGSI IMPORT EXCEL + PREVIEW POPUP + TEMPLATE DOWNLOAD
+        ====================================================== */
+
+    const modal = document.getElementById("importExcelModal");
+    const importBtn = document.getElementById("importBtn");
+    const closeBtn = document.querySelector(".closeBtn");
+    const uploadArea = document.getElementById("uploadArea");
+    const fileInput = document.getElementById("fileInput");
+    const previewArea = document.getElementById("previewArea");
+    const previewTable = document.getElementById("previewTable");
+    let previewData = [];
+
+    /* === FUNGSI MENAMPILKAN PREVIEW === */
+    function renderPreview(data) {
+        previewTable.innerHTML = "";
+        if (data.length === 0) {
+            previewTable.innerHTML = "<tr><td colspan='10'>Tidak ada data</td></tr>";
+            return;
+        }
+        let header = `
+            <tr>
+                <th>Nama</th>
+                <th>NIP</th>
+                <th>Pangkat/Gol</th>
+                <th>Jabatan</th>
+                <th>TMT Fungsional</th>
+                <th>AK Terakhir Angka</th>
+                <th>AK Terakhir Tahun</th>
+                <th>AK Konversi Angka</th>
+                <th>AK Konversi Tahun</th>
+                <th>Ket</th>
+            </tr>
+        `;
+        previewTable.innerHTML += header;
+        data.forEach(row => {
+            const tr = `
+                <tr>
+                    <td>${row.nama}</td>
+                    <td>${row.nip}</td>
+                    <td>${row.pangkatGol}</td>
+                    <td>${row.jabatan}</td>
+                    <td>${convertYMDtoDMY(row.tmtFungsional)}</td>
+                    <td>${row.akTerakhirAngka}</td>
+                    <td>${row.akTerakhirTahun}</td>
+                    <td>${row.akKonversiAngka}</td>
+                    <td>${row.akKonversiTahun}</td>
+                    <td>${row.ket}</td>
+                </tr>
+            `;
+            previewTable.innerHTML += tr;
+        });
+        uploadArea.style.display = "none";
+        previewArea.style.display = "block";
+    }
+
+    /* === BUKA POPUP === */
+    importBtn.addEventListener('click', () => {
+        modal.style.display = "flex";
+    });
+
+    /* === TUTUP POPUP === */
+    closeBtn.onclick = () => modal.style.display = "none";
+    document.querySelector(".cancelBtn").onclick = () => modal.style.display = "none";
+    window.onclick = (e) => { if (e.target == modal) modal.style.display = "none"; };
+
+    /* === KLIK UPLOAD AREA === */
+    uploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    /* === PROSES FILE EXCEL === */
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheet];
+
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                            // Ambil header dari baris pertama
+            const headerRow = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] || [];
+
+            const requiredCols = ["Nama", "NIP", "Pangkat/Gol", "Jabatan", "TMT Fungsional", "AK Terakhir Angka", "AK Terakhir Tahun", "AK Konversi Angka", "AK Konversi Tahun", "Ket"];
+
+            // Validasi kolom berdasarkan header
+            if (!requiredCols.every(c => headerRow.includes(c))) {
+                alert("Format Excel tidak sesuai! Pastikan kolom header benar.");
+                return;
+            }
+
+            // Validasi NIP unik
+            const existingNips = fungsionalData.map(item => item.nip);
+            const duplicateNips = jsonData.filter(row => existingNips.includes(row.NIP)).map(row => row.NIP);
+            if (duplicateNips.length > 0) {
+                alert(`NIP berikut sudah ada: ${duplicateNips.join(', ')}. Hapus atau ubah NIP tersebut.`);
+                fileInput.value = "";
+                return;
+            }
+
+            // SIMPAN KE previewData
+            previewData = jsonData.map(r => ({
+                nama: r.Nama || '',
+                nip: r.NIP || '',
+                pangkatGol: r["Pangkat/Gol"] || '',
+                jabatan: r.Jabatan || '',
+                // PENTING: Paksa konversi nilai tanggal dari Excel menjadi string terlebih dahulu
+                tmtFungsional: convertDMYtoYMD(String(r["TMT Fungsional"]) || ''), 
+                akTerakhirAngka: r["AK Terakhir Angka"] || '',
+                akTerakhirTahun: r["AK Terakhir Tahun"] || '',
+                akKonversiAngka: r["AK Konversi Angka"] || '',
+                akKonversiTahun: r["AK Konversi Tahun"] || '',
+                ket: r.Ket || ''
+            }));
+
+            // TAMPILKAN PREVIEW
+            renderPreview(previewData);
+        };
+
+        reader.readAsArrayBuffer(file);
+    });
+
+    /* === DOWNLOAD TEMPLATE EXCEL === */
+    document.getElementById("downloadTemplate").addEventListener("click", function (e) {
+        e.preventDefault();
+
+        // Buat struktur header template
+        const templateData = [
+            ["Nama", "NIP", "Pangkat/Gol", "Jabatan", "TMT Fungsional", "AK Terakhir Angka", "AK Terakhir Tahun", "AK Konversi Angka", "AK Konversi Tahun", "Ket"]
+        ];
+
+        // Buat worksheet
+        const ws = XLSX.utils.aoa_to_sheet(templateData);
+
+        // Buat workbook
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+        // Download file
+        XLSX.writeFile(wb, "Template_Fungsional.xlsx");
+    });
+
+    /* === IMPORT DATA === */
+    document.querySelector(".importDataBtn").addEventListener('click', () => {
+        if (previewData.length === 0) {
+            alert("Tidak ada data untuk di-import!");
+            return;
+        }
+
+        fungsionalData = [...fungsionalData, ...previewData];
+        localStorage.setItem("fungsionalData", JSON.stringify(fungsionalData));
+
+        renderTable(fungsionalData);
+
+        modal.style.display = "none";
+        uploadArea.style.display = "block";
+        previewArea.style.display = "none";
+        previewTable.innerHTML = "";
+        fileInput.value = "";
+        previewData = [];
+
+        alert("Data berhasil di-import!");
+    });
+
+    // SEARCH FUNCTION
+    const searchInput = document.getElementById("searchInput");
+
+    searchInput.addEventListener("input", function() {
+        const keyword = this.value.toLowerCase().trim();
+
+        const filteredData = fungsionalData.filter(row =>
+            (row.nama && row.nama.toLowerCase().includes(keyword)) ||
+            (row.nip && row.nip.toLowerCase().includes(keyword)) ||
+            (row.pangkatGol && row.pangkatGol.toLowerCase().includes(keyword)) ||
+            (row.jabatan && row.jabatan.toLowerCase().includes(keyword)) ||
+            (row.tmtFungsional && row.tmtFungsional.toLowerCase().includes(keyword)) ||
+            (row.akTerakhirAngka && row.akTerakhirAngka.toLowerCase().includes(keyword)) ||
+            (row.akTerakhirTahun && row.akTerakhirTahun.toLowerCase().includes(keyword)) ||
+            (row.akKonversiAngka && row.akKonversiAngka.toLowerCase().includes(keyword)) ||
+            (row.akKonversiTahun && row.akKonversiTahun.toLowerCase().includes(keyword)) ||
+            (row.ket && row.ket.toLowerCase().includes(keyword))
+        );
+
+        renderTable(filteredData);
+    });
+
+    /// Tambahkan event listener untuk tombol export di bagian akhir script, setelah event listener logout
+    document.getElementById("exportBtn").addEventListener("click", function() {
+        if (fungsionalData.length === 0) {
+            alert("Tidak ada data untuk di-export!");
+            return;
+        }
+        // Siapkan data untuk export (ubah tanggal ke DD/MM/YYYY)
+        const dataToExport = fungsionalData.map(row => ({
+            "Nama": row.nama || '',
+            "NIP": row.nip || '',
+            "Pangkat/Gol": row.pangkatGol || '',
+            "Jabatan": row.jabatan || '',
+            "TMT Fungsional": convertYMDtoDMY(row.tmtFungsional) || '',
+            "AK Terakhir Angka": row.akTerakhirAngka || '',
+            "AK Terakhir Tahun": row.akTerakhirTahun || '',
+            "AK Konversi Angka": row.akKonversiAngka || '',
+            "AK Konversi Tahun": row.akKonversiTahun || '',
+            "Ket": row.ket || ''
+        }));
+        // Buat worksheet dari data
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+        // Buat workbook
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Data Fungsional");
+        // Download file Excel
+        XLSX.writeFile(wb, "Data_Fungsional.xlsx");
+    });
+
+    // USER ACCOUNT DROPDOWN (Bottom Sidebar)
+    document.getElementById("userAccountBtn").addEventListener("click", function () {
+        const drop = document.getElementById("accountDropdown");
+        drop.style.display = drop.style.display === "block" ? "none" : "block";
+    });
+
+    // Klik luar → tutup dropdown
+    document.addEventListener("click", function(e){
+        const btn = document.getElementById("userAccountBtn");
+        const drop = document.getElementById("accountDropdown");
+
+        if (!btn.contains(e.target) && !drop.contains(e.target)) {
+            drop.style.display = "none";
+        }
+    });
+
+    // Logout
+    document.getElementById("logoutDropdown").addEventListener("click", function(){
+        sessionStorage.clear();
+        window.location.href = "login.html";
+    });
+    });
+</script>
+</body>
+</html>

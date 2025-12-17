@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lakin - Data SDM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap" rel="stylesheet">
+    <!-- Tambahkan CDN untuk SheetJS (xlsx) untuk memproses file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --bg: linear-gradient(135deg, #f4f6f9 0%, #e9ecef 100%);
+            --card: linear-gradient(135deg, #ffffff 0%, #f9fbfc 100%);
+            --muted: #6b7280;
+            --primary: #1a5cff;
+            --accent: #e8f1ff;
+            --soft: #f1f6ff;
+            --text: #111827;
+            --glass: rgba(10,25,80,0.04);
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.1);
+            --shadow-heavy: 0 12px 32px rgba(0, 0, 0, 0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', ui-sans-serif; }
+        body { background: var(--bg); display: flex; color: var(--text); font-size: 15px; height: 100vh; }
+
+        /* =========================
+           SIDEBAR
+        ========================== */
+        .sidebar {
+            width: 260px;
+            background: var(--card);
+            height: 100vh;
+            box-shadow: var(--shadow-medium);
+            padding: 24px 20px 28px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            transition: .3s ease;
+            padding-bottom: 0;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        /* ===== SIDEBAR HEADER ===== */
+        .sidebar-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar-header img {
+            width: 55px;
+            margin-bottom: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header img:hover {
+            transform: scale(1.05);
+        }
+
+        .sidebar-header h3 {
+            font-size: 16px;
+            color: #0b1220;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* =========================
+           MENU
+        ========================== */
+        .menu { 
+            list-style: none; 
+            margin-top: 25px; 
+            padding: 0; 
+        }
+
+        .menu li {
+            padding: 12px 14px; 
+            border-radius: 12px; 
+            margin: 6px 8px; 
+            cursor: pointer;
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            transition: all 0.3s ease;
+            color: var(--text);
+            font-size: 15px;
+            position: relative;
+        }
+
+        .menu li:hover { 
+            background: linear-gradient(135deg, #f3f6ff 0%, #eef5ff 100%);
+            transform: translateX(6px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .active {
+            background: linear-gradient(135deg, #eef6ff 0%, #e8f1ff 100%);
+            color: var(--primary); 
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(26,92,255,0.15);
+            border-left: 4px solid var(--primary);
+        }
+
+        .menu li img { width: 22px; transition: opacity 0.3s ease; }
+        .menu li:hover img { opacity: 1; }
+
+        /* ============ SUBMENU ============ */
+        .submenu {
+            list-style: none;
+            padding-left: 45px;
+            margin: 0;
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .submenu.open { 
+            display: block; 
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .submenu li {
+            padding: 8px 0;
+            margin: 2px 0;
+            color: #6b7280;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .submenu li:hover {
+            background: linear-gradient(135deg, #f3f6ff 0%, #eef5ff 100%);
+            color: var(--primary);
+        }
+
+        .submenu li.active {
+            background: linear-gradient(135deg, #eef6ff 0%, #e8f1ff 100%);
+            color: var(--primary);
+            font-weight: 600;
+            box-shadow: var(--shadow-light);
+        }
+
+        /* =========================
+           COLLAPSE BUTTON
+        ========================== */
+        .collapse-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fbfc 100%);
+            color: var(--text);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .collapse-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* COLLAPSED SIDEBAR */
+        .sidebar.collapsed { width: 70px; padding: 24px 10px; }
+        .sidebar.collapsed .sidebar-header { display: none; }
+        .sidebar.collapsed .menu li span { display: none; }
+        .sidebar.collapsed .submenu { display: none !important; }
+        .sidebar.collapsed .menu li { justify-content: center; }
+
+        /* geser main-content */
+        .sidebar.collapsed ~ .main-content { margin-left: 70px !important; }
+        /* HEADER IKUT GESER SAAT SIDEBAR COLLAPSE */
+        .sidebar.collapsed ~ .main-content .header { left: 70px !important; }
+
+        .sidebar-body {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .sidebar-body .menu {
+            flex: 1;
+        }
+
+        /* ==== USER ACCOUNT (mirip ChatGPT — rapi & horizontal) ==== */
+        .user-account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card);
+            padding: 14px 16px;
+            border-top: 1px solid #e5e7eb;
+            cursor: pointer;
+            position: relative;
+            margin-top: auto;
+            transition: background 0.3s ease;
+        }
+
+        .user-account:hover {
+            background: linear-gradient(135deg, #f8f9fb 0%, #f1f6ff 100%);
+        }
+
+        /* kiri: foto + teks */
+        .ua-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* avatar bulat */
+        .ua-photo {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #1a5cff 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: var(--shadow-light);
+        }
+
+        /* tulisan */
+        .ua-info { display: flex; flex-direction: column; }
+
+        .ua-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .ua-role {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        /* caret (panah) */
+        .ua-caret {
+            font-size: 14px;
+            color: #6b7280;
+            transition: transform 0.3s ease;
+        }
+
+        .user-account:hover .ua-caret {
+            transform: rotate(180deg);
+        }
+
+        /* === DROPDOWN === */
+        .ua-dropdown {
+            position: absolute;
+            bottom: 65px;
+            left: 10px;
+            width: 180px;
+            background: var(--card);
+            border-radius: 14px;
+            padding: 8px 0;
+            display: none;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid #e5e7eb;
+        }
+
+        .ua-dropdown a {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #1f2937;
+            font-size: 14px;
+            line-height: 1;
+            transition: background 0.3s ease;
+        }
+
+        .ua-dropdown a:hover {
+            background: linear-gradient(135deg, #f3f4f6 0%, #eef5ff 100%);
+        }
+
+        .logout-btn {
+            color: #dc2626 !important;
+            font-weight: 600;
+        }
+
+        .logout-icon {
+            width: 18px;
+            opacity: 0.85;
+        }
+
+        /* Saat sidebar collapse — sembunyikan nama & role */
+        .sidebar.collapsed .ua-info {
+            display: none;
+        }
+
+        /* Kecilkan avatar biar proporsional */
+        .sidebar.collapsed .ua-photo {
+            width: 36px;
+            height: 36px;
+            font-size: 14px;
+        }
+
+        /* Geser panah caret agar tetap rapi di kanan avatar */
+        .sidebar.collapsed .ua-caret {
+            display: none;
+        }
+
+        /* Ratakan user-account ke tengah */
+        .sidebar.collapsed .user-account {
+            justify-content: center;
+            padding: 16px 0;
+        }
+
+        /* =========================
+           MAIN CONTENT
+        ========================== */
+        .main-content {
+            margin-left: 260px;
+            padding: 120px 40px 40px;
+            width: 100%;
+            transition: .3s ease;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            background: var(--bg);
+            padding: 24px 40px;
+            border-bottom: 1px solid #cdd3e1;
+            z-index: 999;
+            transition: .3s ease;
+            box-shadow: var(--shadow-light);
+        }
+
+        .header-top {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .bps-logo { width: 70px; height: 55px; object-fit: cover; border-radius: 8px; box-shadow: var(--shadow-light); }
+
+        .bps-title { font-size: 20px; font-weight: 600; color: #0093dd; }
+        .bps-subtitle { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #111827;
+        }
+
+        .page-sub {
+            font-size: 15px;
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        .box {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid rgba(16,24,40,0.04);
+        }
+
+        .top-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            border: 1px solid #d1d5db;
+            background: var(--card);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-light);
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #f3f4f6 0%, #eef5ff 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1a5cff 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(26,92,255,0.22);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0d44d6 0%, #1d4ed8 100%);
+            box-shadow: 0 6px 18px rgba(26,92,255,0.32);
+        }
+
+        .search-box {
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            padding: 14px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #e3e6ef;
+            box-shadow: var(--shadow-light);
+        }
+
+        .search-box input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        /* TABLE */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+        }
+
+        th {
+            text-align: left;
+            padding: 16px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        }
+
+        td {
+            padding: 18px 12px;
+            font-size: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background 0.3s ease;
+        }
+
+        tr:hover td {
+            background: linear-gradient(135deg, #f9fafb 0%, #f1f6ff 100%);
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #047857;
+            font-size: 13px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .aksi-btn {
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .aksi-btn:hover {
+            opacity: 1;
+            transform: scale(1.15);
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            color: var(--muted);
+            font-size: 16px;
+            padding: 40px 20px;
+        }
+
+        /* HIDDEN INPUT FOR FILE UPLOAD */
+        #fileInput {
+            display: none;
+        }
+
+        /* MODALS */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(3px);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            width: 540px;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fbfc 100%);
+            backdrop-filter: blur(8px);
+            padding: 28px;
+            border-radius: 18px;
+            box-shadow: var(--shadow-heavy);
+            animation: scaleIn 0.25s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .closeBtn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+            transition: 0.2s;
+        }
+
+        .closeBtn:hover { color: #ef4444; }
+
+        .modal-content h2 {
+            margin-top: 5px;
+            margin-bottom: 18px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            letter-spacing: .3px;
+        }
+
+        .format-box {
+            background: linear-gradient(135deg, #f5f7ff 0%, #eef5ff 100%);
+            border: 1px solid #dbe3ff;
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .format-box p {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 400;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #e6ebff 0%, #dbe3ff 100%);
+            color: #010213;
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-right: 20px;
+            display: inline-block;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .template-link {
+            display: inline-block;
+            margin-top: 12px;
+            font-weight: 400;
+            text-decoration: none;
+            font-size: small;
+            color: var(--primary);
+            transition: color 0.3s ease;
+        }
+
+        .template-link:hover {
+            color: #0d44d6;
+            text-decoration: underline;
+        }
+
+        .upload-box {
+            border: 2px dashed #b9c4d8;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 18px;
+            transition: .3s ease;
+            background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
+        }
+
+        .upload-box:hover {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8f1ff 100%);
+            border-color: #7da4ff;
+        }
+
+        .upload-box p {
+            font-size: 15px;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .upload-box small {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #4b7bfd;
+        }
+
+        .preview-area-box {
+            max-height: 260px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background: var(--card);
+        }
+
+        .modal-footer {
+            text-align: right;
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .cancelBtn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 400;
+            color: #374151;
+            transition: .3s ease;
+        }
+
+        .cancelBtn:hover {
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+        }
+
+        .importDataBtn {
+            background: linear-gradient(135deg, #1a5cff 0%, #3b82f6 100%);
+            color: white;
+            padding: 9px 18px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .3s ease;
+            box-shadow: 0 4px 12px rgba(26,92,255,0.22);
+        }
+
+        .importDataBtn:hover {
+            background: linear-gradient(135deg, #0d44d6 0%, #1d4ed8 100%);
+            box-shadow: 0 6px 15px rgba(26,92,255,0.32);
+        }
+
+        /* === POPUP TAMBAH DATA (MODERN SOFT UI) === */
+        #addDataModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(4px);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .add-modal-content {
+            width: 480px;
+            background: var(--card);
+            padding: 28px;
+            border-radius: 18px;
+            box-shadow: var(--shadow-heavy);
+            animation: fadeUp .25s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(20px); }
+            to { opacity:1; transform:translateY(0); }
+        }
+
+        .add-modal-content h2 {
+            margin-bottom: 18px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .closeAddBtn {
+            float: right;
+            cursor: pointer;
+            font-size: 22px;
+            color: #9CA3AF;
+            transition: .2s;
+        }
+
+        .closeAddBtn:hover {
+            color: #EF4444;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            font-size: 14px;
+            transition: .3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            background: var(--card);
+            border-color: #60a5fa;
+            box-shadow: 0 0 8px rgba(96,165,250,0.25);
+        }
+
+        .add-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .add-cancel {
+            padding: 10px 18px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+            border: none;
+            cursor: pointer;
+            color: #374151;
+            font-size: 14px;
+            transition: .3s ease;
+        }
+
+        .add-cancel:hover {
+            background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+        }
+
+        .add-save {
+            padding: 10px 20px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1a5cff 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+            transition: .3s ease;
+        }
+
+        .add-save:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #0d44d6 100%);
+            box-shadow: 0 6px 18px rgba(59,130,246,0.45);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                padding: 20px;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 100px 20px 20px;
+            }
+
+            .header {
+                left: 0;
+                padding: 20px;
+            }
+
+            .top-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+
+            .modal-content,
+            .add-modal-content {
+                width: 90%;
+                padding: 20px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+
+    <div class="collapse-btn" id="toggleSidebar">❮</div>
+
+    <!-- SIDEBAR HEADER BARU -->
+    <div class="sidebar-header">
+        <img src="gambar/logo.png" alt="Logo BPS">
+        <h3>BPS Kota Pontianak</h3>
+        <p>Kepegawaian Internal</p>
+    </div>
+
+    <div class="sidebar-body">
+    <ul class="menu">
+
+        <li onclick="window.location.href='dashboard.html'">
+            <img src="gambar/homee.png" alt="Dashboard">
+            <span>Dashboard</span>
+        </li>
+        <li class="subbag-item" data-submenu="keuangan"><img src="gambar/keuangan.jpg" alt="Keuangan"><span>Keuangan</span></li>
+        <ul class="submenu" id="keuangan">
+            <li onclick="window.location.href='keuanganSdm.html'">SDM</li><li onclick="window.location.href='keuanganFungsional.html'">Fungsional</li><li onclick="window.location.href='keuanganKgb.html'">Kenaikan Gaji Berkala</li><li onclick="window.location.href='keuanganKp.html'">Kenaikan Pangkat</li>
+        </ul>
+
+        <li class="subbag-item" data-submenu="bmn"><img src="gambar/BMN.png" alt="BMN"><span>BMN</span></li>
+        <ul class="submenu" id="bmn">
+            <li onclick="window.location.href='bmnSdm.html'">SDM</li><li onclick="window.location.href='bmnFungsional.html'">Fungsional</li><li onclick="window.location.href='bmnKgb.html'">Kenaikan Gaji Berkala</li><li onclick="window.location.href='bmnKp.html'">Kenaikan Pangkat</li>
+        </ul>
+
+        <li class="subbag-item" data-submenu="spider"><img src="gambar/spider.png" alt="Spider"><span>Spider</span></li>
+        <ul class="submenu" id="spider">
+            <li onclick="window.location.href='spiderSdm.html'">SDM</li><li onclick="window.location.href='spiderFungsional.html'">Fungsional</li><li onclick="window.location.href='spiderKgb.html'">Kenaikan Gaji Berkala</li><li onclick="window.location.href='spiderKp.html'">Kenaikan Pangkat</li>
+        </ul>
+
+        <li class="subbag-item" data-submenu="bos"><img src="gambar/bos.png" alt="BOS"><span>BOS</span></li>
+        <ul class="submenu" id="bos">
+            <li onclick="window.location.href='bosSdm.html'">SDM</li><li onclick="window.location.href='bosFungsional.html'">Fungsional</li><li onclick="window.location.href='bosKgb.html'">Kenaikan Gaji Berkala</li><li onclick="window.location.href='bosKp.html'">Kenaikan Pangkat</li>
+        </ul>
+
+        <li class="subbag-item" data-submenu="sakip"><img src="gambar/sakipp.png" alt="Sakip"><span>Sakip</span></li>
+        <ul class="submenu" id="sakip">
+            <li onclick="window.location.href='sakipSdm.html'">SDM</li><li onclick="window.location.href='sakipFungsional.html'">Fungsional</li><li onclick="window.location.href='sakipKgb.html'">Kenaikan Gaji Berkala</li><li onclick="window.location.href='sakipKp.html'">Kenaikan Pangkat</li>
+        </ul>
+
+        <li class="subbag-item" data-submenu="lakin"><img src="gambar/lakinn.png" alt="Lakin"><span>Lakin</span></li>
+        <ul class="submenu" id="lakin">
+            <li >SDM</li><li>Fungsional</li><li>Kenaikan Gaji Berkala</li><li>Kenaikan Pangkat</li>
+        </ul>
+
+        <li class="subbag-item" data-submenu="simpeg"><img src="gambar/simpegg.png" alt="Simpeg"><span>Simpeg</span></li>
+        <ul class="submenu" id="simpeg">
+            <li onclick="window.location.href='simpegSdm.html'">SDM</li><li onclick="window.location.href='simpegFungsional.html'">Fungsional</li><li onclick="window.location.href='simpegKgb.html'">Kenaikan Gaji Berkala</li><li onclick="window.location.href='simpeg.html'">Kenaikan Pangkat</li>
+        </ul>
+
+        <li class="subbag-item" data-submenu="pppk"><img src="gambar/pppkk.svg" alt="PPPK"><span>PPPK</span></li>
+        <ul class="submenu" id="pppk">
+            <li onclick="window.location.href='pppkSdm.html'">SDM</li><li onclick="window.location.href='pppkFungsional.html'">Fungsional</li><li onclick="window.location.href='pppkKgb.html'">Kenaikan Gaji Berkala</li><li onclick="window.location.href='pppkKp.html'">Kenaikan Pangkat</li>
+        </ul>
+
+    </ul>
+    </div>
+    <div class="user-account" id="userAccountBtn">
+    <div class="ua-left">
+        <div class="ua-photo">KS</div>
+
+        <div class="ua-info">
+            <div class="ua-name">Kepala Sub Bagian</div>
+            <div class="ua-role">Administrator</div>
+        </div>
+    </div>
+
+    <div class="ua-caret">▾</div>
+
+    <div class="ua-dropdown" id="accountDropdown">
+        <a class="logout-btn" id="logoutDropdown">
+            <img src="gambar/logout.svg" class="logout-icon" alt="Logout"> Logout
+        </a>
+    </div>
+</div>
+</div>
+
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <div class="header">
+        <div class="header-top" style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="header-left" style="display:flex;align-items:center;gap:16px;">
+                <img src="gambar/logo.png" class="bps-logo" alt="Logo BPS">
+                <div>
+                <h2 class="bps-title">Badan Pusat Statistik<br>Kota Pontianak</h2>
+                <p class="bps-subtitle">Sistem Informasi Kepegawaian Internal</p>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <h1 class="page-title">Lakin - Data SDM</h1>
+    <p class="page-sub">Kelola data dengan menambah, mengubah, atau menghapus informasi</p>
+
+    <div class="box">
+
+        <div class="top-actions">
+
+            <button id="importBtn" class="btn"><img src="gambar/import.png" alt="Import" width="16">Import Excel</button>
+
+<!-- POPUP IMPORT EXCEL -->
+<div id="importExcelModal" class="modal">
+    <div class="modal-content">
+        <span class="closeBtn">&times;</span>
+
+        <h2>Import Data dari Excel</h2>
+
+        <!-- Format yang Dibutuhkan -->
+        <div class="format-box">
+            <p><b>Format Excel yang Dibutuhkan:</b></p>
+            <span class="tag">NIP</span>
+            <span class="tag">Nama</span>
+            <span class="tag">Jabatan</span>
+            <span class="tag">Golongan</span>
+            <span class="tag">Status</span>
+
+            <a href="#" id="downloadTemplate" class="template-link">Download Template Excel</a>
+        </div>
+
+        <!-- Upload Area -->
+        <div id="uploadArea" class="upload-box">
+            <div class="upload-icon">⬆</div>
+            <p>Klik untuk memilih file Excel</p>
+            <small>Format: .xlsx atau .xls</small>
+        </div>
+
+        <!-- Preview Area -->
+        <div id="previewArea" class="preview-area-box" style="display:none;">
+            <table id="previewTable"></table>
+        </div>
+
+
+        <div class="modal-footer">
+            <button class="cancelBtn">Batal</button>
+            <button class="importDataBtn">Import Data</button>
+        </div>
+
+        <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+    </div>
+</div>
+            <button class="btn btn-primary" id="addDataBtn">+ Tambah Data</button>
+            <!-- POPUP TAMBAH DATA (FINAL FIXED) -->
+<div id="addDataModal" class="modal">
+    <div class="modal-content" style="max-width:450px;background:#fff;color:#111;">
+        <span class="closeAddBtn" style="float:right;cursor:pointer;font-size:22px">&times;</span>
+        <h2 id="formTitle"  style="margin-bottom:15px;font-weight:200">Tambah Data SDM</h2>
+
+        <div class="form-group" id="nipGroup">
+            <label>NIP</label>
+            <input type="text" id="addNip" placeholder="Masukkan NIP">
+        </div>
+
+        <div class="form-group">
+            <label>Nama</label>
+            <input type="text" id="addNama" placeholder="Masukkan Nama Pegawai">
+        </div>
+
+        <div class="form-group">
+            <label>Jabatan</label>
+            <input type="text" id="addJabatan" placeholder="Masukkan Jabatan">
+        </div>
+
+                <div class="form-group">
+            <label>Golongan</label>
+            <input type="text" id="addGolongan" placeholder="Masukkan Golongan">
+        </div>
+
+                <div class="form-group">
+            <label>Status</label>
+            <select id="addStatus">
+                <option value="Aktif">Aktif</option>
+                <option value="Cuti">Cuti</option>
+                <option value="Pensiun">Pensiun</option>
+            </select>
+        </div>
+        <div class="add-footer">
+            <button class="add-cancel">Batal</button>
+            <button class="add-save" id="saveDataBtn">Simpan</button>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+        <div class="search-box">
+            <img src="gambar/search.png" width="18" alt="Search">
+            <input type="text" placeholder="Cari data..." id="searchInput">
+        </div>
+
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>NIP</th>
+                    <th>NAMA</th>
+                    <th>JABATAN</th>
+                    <th>GOLONGAN</th>
+                    <th>STATUS</th>
+                    <th>AKSI</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data akan dimuat dari localStorage -->
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // LOGIN PROTECT (jalankan segera, tidak perlu di dalam DOMContentLoaded)
+        if (sessionStorage.getItem("isLogin") !== "true") {
+            window.location.href = "login.html";
+        }
+
+        /* SIDEBAR COLLAPSE */
+        const sidebar = document.getElementById("sidebar");
+        const toggleBtn = document.getElementById("toggleSidebar");
+        toggleBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("collapsed");
+            toggleBtn.innerHTML = sidebar.classList.contains("collapsed") ? "❯" : "❮";
+        });
+
+        /* SUBMENU ACCORDION */
+        const submenus = document.querySelectorAll(".submenu");
+        const items = document.querySelectorAll(".subbag-item");
+        items.forEach(item => {
+            item.addEventListener("click", () => {
+                const target = document.getElementById(item.dataset.submenu);
+                submenus.forEach(menu => {
+                    if (menu !== target) menu.classList.remove("open");
+                });
+                target.classList.toggle("open");
+            });
+        });
+
+        /* DETEKSI HALAMAN AKTIF DAN BUKA SUBMENU */
+        const currentPage = window.location.pathname.split('/').pop(); // Ambil nama file halaman saat ini, misal 'lakinSdm.html'
+        const submenuItems = document.querySelectorAll('.submenu li');
+        submenuItems.forEach(item => {
+            const onclickAttr = item.getAttribute('onclick');
+            if (onclickAttr && onclickAttr.includes(currentPage)) {
+                item.classList.add('active'); // Tandai item submenu aktif
+                const submenu = item.closest('.submenu');
+                submenu.classList.add('open'); // Buka submenu induk
+            }
+        });
+
+        // DATA MANAGEMENT
+        let lakinSdmData = JSON.parse(localStorage.getItem('lakinSdmData')) || []; // Array of objects: {nip, nama, jabatan, golongan, status}
+        const tableBody = document.getElementById('tableBody');
+
+        // Function to render table
+        function renderTable(data) {
+            tableBody.innerHTML = '';
+            if (data.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            Belum ada data. Klik tombol "Tambah Data" untuk menambahkan data baru atau "Import Excel".
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.nip || ''}</td>
+                    <td>${row.nama || ''}</td>
+                    <td>${row.jabatan || ''}</td>
+                    <td>${row.golongan || ''}</td>
+                    <td><span class="status-active">${row.status || 'Aktif'}</span></td>
+                    <td>
+                        <img src="gambar/edit.png" class="aksi-btn edit" data-index="${index}" alt="Edit">
+                        <img src="gambar/hapuss.png" class="aksi-btn delete" data-index="${index}" alt="Delete">
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Load data on page load
+        renderTable(lakinSdmData);
+
+        // Variabel global untuk mode
+        let isEditMode = false;
+        let editingIndex = null;
+
+        // Fungsi untuk membuka modal tambah data
+        document.getElementById("addDataBtn").addEventListener("click", function () {
+            isEditMode = false;
+            editingIndex = null;
+
+            // Reset form
+            document.getElementById("addNip").value = "";
+            document.getElementById("addNama").value = "";
+            document.getElementById("addJabatan").value = "";
+            document.getElementById("addGolongan").value = "";
+            document.getElementById("addStatus").value = "Aktif";
+
+            // Tampilkan field NIP (untuk tambah data)
+            document.getElementById("nipGroup").style.display = "block";
+            document.getElementById("addNip").readOnly = false;
+
+            // Ubah judul
+            document.getElementById("formTitle").innerText = "Tambah Data SDM";
+            document.getElementById("saveDataBtn").innerText = "Simpan";
+
+            // Tampilkan modal
+            document.getElementById("addDataModal").style.display = "flex";
+        });
+
+        // Fungsi untuk membuka modal edit data
+        function openEditModal(index) {
+            isEditMode = true;
+            editingIndex = index;
+            const data = lakinSdmData[index];
+
+            // Isi form dengan data lama
+            document.getElementById("addNip").value = data.nip;
+            document.getElementById("addNama").value = data.nama;
+            document.getElementById("addJabatan").value = data.jabatan;
+            document.getElementById("addGolongan").value = data.golongan;
+            document.getElementById("addStatus").value = data.status;
+
+            // Sembunyikan field NIP (karena NIP tidak boleh diubah saat edit)
+            document.getElementById("nipGroup").style.display = "none";
+
+            // Ubah judul
+            document.getElementById("formTitle").innerText = "Edit Data SDM";
+            document.getElementById("saveDataBtn").innerText = "Update";
+
+            // Tampilkan modal
+            document.getElementById("addDataModal").style.display = "flex";
+        }
+
+        // Event listener untuk tombol edit dan delete di tabel
+        tableBody.addEventListener("click", function(e) {
+            const index = parseInt(e.target.dataset.index);
+            if (isNaN(index)) return; // Pastikan index valid
+            if (e.target.classList.contains("edit")) {
+                openEditModal(index);
+            } else if (e.target.classList.contains("delete")) {
+                if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+                    lakinSdmData.splice(index, 1);
+                    localStorage.setItem("lakinSdmData", JSON.stringify(lakinSdmData));
+                    renderTable(lakinSdmData);
+                }
+            }
+        });
+
+        // Event listener untuk simpan data
+        document.getElementById("saveDataBtn").addEventListener("click", function () {
+            const newData = {
+                nip: document.getElementById("addNip").value.trim(),
+                nama: document.getElementById("addNama").value.trim(),
+                jabatan: document.getElementById("addJabatan").value.trim(),
+                golongan: document.getElementById("addGolongan").value.trim(),
+                status: document.getElementById("addStatus").value
+            };
+
+            if (!newData.nama) {
+                alert("Nama wajib diisi!");
+                return;
+            }
+
+            if (isEditMode) {
+                // Mode edit: Gunakan NIP lama, update data lainnya
+                newData.nip = lakinSdmData[editingIndex].nip; // NIP tetap dari data lama
+                lakinSdmData[editingIndex] = newData;
+            } else {
+                // Mode tambah: NIP wajib diisi dan unik
+                if (!newData.nip) {
+                    alert("NIP wajib diisi!");
+                    return;
+                }
+                if (lakinSdmData.some(item => item.nip === newData.nip)) {
+                    alert("NIP sudah ada! Gunakan NIP yang berbeda.");
+                    return;
+                }
+                lakinSdmData.push(newData);
+            }
+
+            localStorage.setItem("lakiknSdmData", JSON.stringify(lakinSdmData));
+            renderTable(lakinSdmData);
+            document.getElementById("addDataModal").style.display = "none";
+        });
+
+        // Tutup modal
+        const closeAddBtn = document.querySelector(".closeAddBtn");
+        const cancelAddBtn = document.querySelector(".add-cancel");
+
+        closeAddBtn.addEventListener("click", () => {
+            document.getElementById("addDataModal").style.display = "none";
+        });
+
+        cancelAddBtn.addEventListener("click", () => {
+            document.getElementById("addDataModal").style.display = "none";
+        });
+
+        window.addEventListener("click", function(e) {
+            if (e.target === document.getElementById("addDataModal")) {
+                document.getElementById("addDataModal").style.display = "none";
+            }
+        });
+
+        /* ======================================================
+           FUNGSI IMPORT EXCEL + PREVIEW POPUP + TEMPLATE DOWNLOAD
+           ====================================================== */
+        const modal = document.getElementById("importExcelModal");
+        const importBtn = document.getElementById("importBtn");
+        const closeBtn = document.querySelector(".closeBtn");
+        const uploadArea = document.getElementById("uploadArea");
+        const fileInput = document.getElementById("fileInput");
+        const previewArea = document.getElementById("previewArea");
+        const previewTable = document.getElementById("previewTable");
+        let previewData = [];
+
+        /* === FUNGSI MENAMPILKAN PREVIEW === */
+        function renderPreview(data) {
+            previewTable.innerHTML = "";
+            if (data.length === 0) {
+                previewTable.innerHTML = "<tr><td colspan='5'>Tidak ada data</td></tr>";
+                return;
+            }
+            let header = `
+                <tr>
+                    <th>NIP</th>
+                    <th>Nama</th>
+                    <th>Jabatan</th>
+                    <th>Golongan</th>
+                    <th>Status</th>
+                </tr>
+            `;
+            previewTable.innerHTML += header;
+            data.forEach(row => {
+                const tr = `
+                    <tr>
+                        <td>${row.nip}</td>
+                        <td>${row.nama}</td>
+                        <td>${row.jabatan}</td>
+                        <td>${row.golongan}</td>
+                        <td>${row.status}</td>
+                    </tr>
+                `;
+                previewTable.innerHTML += tr;
+            });
+            uploadArea.style.display = "none";
+            previewArea.style.display = "block";
+        }
+
+        /* === BUKA POPUP === */
+        importBtn.addEventListener('click', () => {
+            modal.style.display = "flex";
+        });
+
+        /* === TUTUP POPUP === */
+        closeBtn.onclick = () => modal.style.display = "none";
+        document.querySelector(".cancelBtn").onclick = () => modal.style.display = "none";
+        window.onclick = (e) => { if (e.target == modal) modal.style.display = "none"; };
+
+        /* === KLIK UPLOAD AREA === */
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        /* === PROSES FILE EXCEL === */
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheet];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                // Validasi kolom
+                const requiredCols = ["NIP", "Nama", "Jabatan", "Golongan", "Status"];
+                const fileCols = Object.keys(jsonData[0] || {});
+                if (!requiredCols.every(c => fileCols.includes(c))) {
+                    alert("Format Excel tidak sesuai! Pastikan kolom: NIP, Nama, Jabatan, Golongan, Status.");
+                    fileInput.value = "";
+                    return;
+                }
+
+                // Validasi NIP unik
+                const existingNips = lakinSdmData.map(item => item.nip);
+                const duplicateNips = jsonData.filter(row => existingNips.includes(row.NIP)).map(row => row.NIP);
+                if (duplicateNips.length > 0) {
+                    alert(`NIP berikut sudah ada: ${duplicateNips.join(', ')}. Hapus atau ubah NIP tersebut.`);
+                    fileInput.value = "";
+                    return;
+                }
+
+                // SIMPAN KE previewData
+                previewData = jsonData.map(r => ({
+                    nip: r.NIP,
+                    nama: r.Nama,
+                    jabatan: r.Jabatan,
+                    golongan: r.Golongan,
+                    status: r.Status,
+                }));
+
+                // TAMPILKAN PREVIEW
+                renderPreview(previewData);
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        /* === DOWNLOAD TEMPLATE EXCEL === */
+        document.getElementById("downloadTemplate").addEventListener("click", function (e) {
+            e.preventDefault();
+
+            // Buat struktur header template
+            const templateData = [
+                ["NIP", "Nama", "Jabatan", "Golongan", "Status"]
+            ];
+
+            // Buat worksheet
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+
+            // Buat workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+            // Download file
+            XLSX.writeFile(wb, "Template_SDM.xlsx");
+        });
+
+        /* === IMPORT DATA === */
+        document.querySelector(".importDataBtn").addEventListener('click', () => {
+            if (previewData.length === 0) {
+                alert("Tidak ada data untuk di-import!");
+                return;
+            }
+
+            lakinSdmData = [...lakinSdmData, ...previewData];
+            localStorage.setItem("lakinSdmData", JSON.stringify(lakinSdmData));
+
+            renderTable(lakinSdmData);
+
+            modal.style.display = "none";
+            uploadArea.style.display = "block";
+            previewArea.style.display = "none";
+            previewTable.innerHTML = "";
+            fileInput.value = "";
+            previewData = [];
+
+            alert("Data berhasil di-import!");
+        });
+
+        // SEARCH FUNCTION
+        const searchInput = document.getElementById("searchInput");
+
+        searchInput.addEventListener("input", function() {
+            const keyword = this.value.toLowerCase().trim();
+
+            const filteredData = lakinSdmData.filter(row =>
+                (row.nip && row.nip.toLowerCase().includes(keyword)) ||
+                (row.nama && row.nama.toLowerCase().includes(keyword)) ||
+                (row.jabatan && row.jabatan.toLowerCase().includes(keyword)) ||
+                (row.golongan && row.golongan.toLowerCase().includes(keyword)) ||
+                (row.status && row.status.toLowerCase().includes(keyword))
+            );
+
+            renderTable(filteredData);
+        });
+
+        // USER ACCOUNT DROPDOWN (Bottom Sidebar)
+        document.getElementById("userAccountBtn").addEventListener("click", function () {
+            const drop = document.getElementById("accountDropdown");
+            drop.style.display = drop.style.display === "block" ? "none" : "block";
+        });
+
+        // Klik luar → tutup dropdown
+        document.addEventListener("click", function(e){
+            const btn = document.getElementById("userAccountBtn");
+            const drop = document.getElementById("accountDropdown");
+
+            if (!btn.contains(e.target) && !drop.contains(e.target)) {
+                drop.style.display = "none";
+            }
+        });
+
+        // Logout
+        document.getElementById("logoutDropdown").addEventListener("click", function(){
+            sessionStorage.clear();
+            window.location.href = "login.html";
+        });
+    });
+</script>
+</body>
+</html>
