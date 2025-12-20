@@ -1,6 +1,14 @@
 <?php
 require '../../config/functions.php';
 
+if (isset($_POST["import_data"])) {
+    $result = importSDM($_POST['excel_json']);
+    echo "<script>
+            alert('Import Selesai! Berhasil: " . $result['success'] . ", Gagal/Duplikat: " . $result['fail'] . "');
+            document.location.href = 'sdm.php';
+          </script>";
+}
+
 $pegawai = query("SELECT * FROM pegawai ORDER BY id DESC");
 
 if (isset($_POST["simpan_data"])) {

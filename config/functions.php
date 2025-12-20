@@ -624,4 +624,86 @@ function updateTimDashboard($data) {
     }
     return 1;
 }
+
+// ==========================================
+// 10. FUNGSI IMPORT EXCEL (PERBAIKAN)
+// ==========================================
+
+// Helper: Mengubah Tanggal Excel (Serial Number / String) ke YYYY-MM-DD
+function excelDateToSQL($dateValue) {
+    if (empty($dateValue)) return '0000-00-00';
+    
+    // Jika formatnya angka (Serial Excel, misal: 45321)
+    if (is_numeric($dateValue)) {
+        $unixDate = ($dateValue - 25569) * 86400;
+        return gmdate("Y-m-d", $unixDate);
+    }
+    
+    // Jika formatnya string (misal: 12/31/2023 atau 2023-12-31)
+    try {
+        $date = new DateTime($dateValue);
+        return $date->format('Y-m-d');
+    } catch (Exception $e) {
+        return '0000-00-00';
+    }
+}
+
+function importSDM($json_data) {
+    global $conn;
+    $data = json_decode($json_data, true);
+
+    if (!$data) return ["status" => "error", "msg" => "Data JSON kosong atau rusak."];
+
+    $berhasil = 0;
+    $gagal = 0;
+    $duplikat_list = [];
+
+    foreach ($data as $row) {
+        // Ambil data berdasarkan Header Excel (Case Sensitive!)
+        $nama       = htmlspecialchars($row['Nama'] ?? '');
+        $nip_bps    = htmlspecialchars($row['NIP BPS'] ?? '');
+        $nip        = htmlspecialchars($row['NIP'] ?? '');
+        $jabatan    = htmlspecialchars($row['Jabatan'] ?? '');
+        
+        // Konversi Tanggal
+        $tmt_jab    = excelDateToSQL($row['TMT Jabatan'] ?? ''); 
+        $gol_akhir  = htmlspecialchars($row['Gol Akhir'] ?? '');
+        $tmt_gol    = excelDateToSQL($row['TMT Golongan'] ?? '');
+        $status     = htmlspecialchars($row['Status'] ?? 'PNS');
+        $pendidikan = htmlspecialchars($row['Pendidikan'] ?? '');
+        $tmt_cpns   = excelDateToSQL($row['TMT CPNS'] ?? '');
+        $ket        = htmlspecialchars($row['Ket'] ?? '');
+
+        // Validasi NIP Wajib Ada
+        if (empty($nip)) {
+            $gagal++; continue;
+        }
+
+        // Cek Duplikat NIP
+        $cek = mysqli_query($conn, "SELECT id FROM pegawai WHERE nip = '$nip'");
+        if (mysqli_num_rows($cek) > 0) {
+            $gagal++;
+            $duplikat_list[] = $nip; // Catat NIP yang gagal
+        } else {
+            // Insert Data
+            $query = "INSERT INTO pegawai 
+                      (nama_lengkap, nip_bps, nip, jabatan, tmt_jabatan, golongan_akhir, tmt_golongan, status_kepegawaian, pendidikan_sk, tmt_cpns, keterangan)
+                      VALUES 
+                      ('$nama', '$nip_bps', '$nip', '$jabatan', '$tmt_jab', '$gol_akhir', '$tmt_gol', '$status', '$pendidikan', '$tmt_cpns', '$ket')";
+            
+            if (mysqli_query($conn, $query)) {
+                $berhasil++;
+            } else {
+                $gagal++;
+            }
+        }
+    }
+
+    $pesan = "Berhasil: $berhasil data. Gagal: $gagal data.";
+    if (!empty($duplikat_list)) {
+        $pesan .= "\\nNIP Duplikat (dilewati): " . implode(", ", $duplikat_list);
+    }
+
+    return ["status" => "success", "msg" => $pesan];
+}
 ?>
