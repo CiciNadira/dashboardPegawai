@@ -571,4 +571,57 @@ function hapusLaporan($id) {
     return mysqli_affected_rows($conn);
 }
 
+// ==========================================
+// 9. FUNGSI PENGATURAN & PROFIL
+// ==========================================
+
+// 1. Update Akun User (Login)
+function updateUser($data) {
+    global $conn;
+    $id       = $data["id"];
+    $username = strtolower(stripslashes($data["username"]));
+    $password = mysqli_real_escape_string($conn, $data["password"]);
+    $nama     = htmlspecialchars($data["nama"]); // Update nama tampilan juga
+    $nip      = htmlspecialchars($data["nip"]);
+
+    // Cek username kembar
+    $cek = mysqli_query($conn, "SELECT username FROM users WHERE username = '$username' AND id != $id");
+    if (mysqli_fetch_assoc($cek)) {
+        echo "<script>alert('Username sudah terpakai!');</script>";
+        return false;
+    }
+
+    // Jika password diisi, update password. Jika kosong, biarkan password lama.
+    if (!empty($password)) {
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        $query = "UPDATE users SET username = '$username', password = '$password_hash', nama_lengkap = '$nama', nip = '$nip' WHERE id = $id";
+    } else {
+        $query = "UPDATE users SET username = '$username', nama_lengkap = '$nama', nip = '$nip' WHERE id = $id";
+    }
+
+    mysqli_query($conn, $query);
+    return mysqli_affected_rows($conn);
+}
+
+// 2. Update Susunan Tim (Kanan Dashboard)
+function updateTimDashboard($data) {
+    global $conn;
+
+    // Reset semua jadi 'Tidak' dulu
+    mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'Tidak'");
+
+    if (!empty($data['sekretaris_id'])) {
+        $id = $data['sekretaris_id'];
+        mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'Sekretaris' WHERE id = $id");
+    }
+    if (!empty($data['bendahara_id'])) {
+        $id = $data['bendahara_id'];
+        mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'Bendahara' WHERE id = $id");
+    }
+    if (!empty($data['staf_id'])) {
+        $id = $data['staf_id'];
+        mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'Staf' WHERE id = $id");
+    }
+    return 1;
+}
 ?>

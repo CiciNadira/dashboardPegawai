@@ -55,9 +55,9 @@ global $base_url;
             <ul class="submenu" id="laporan">
                 <li onclick="window.location.href='<?= $base_url; ?>pages/laporan/keuangan.php'">Lap. Keuangan</li>
                 <li onclick="window.location.href='<?= $base_url; ?>pages/laporan/kepegawaian.php'">Lap. Kepegawaian</li>
-                <li onclick="window.location.href='<?= $base_url; ?>pages/laporan/lakin.php'">Lakin & BMN</li>
+                <li onclick="window.location.href='<?= $base_url; ?>pages/laporan/bmn.php'">BMN</li>
+                <li onclick="window.location.href='<?= $base_url; ?>pages/laporan/lakin.php'">Lakin</li>
             </ul>
-
         </ul>
     </div>
 
@@ -71,6 +71,9 @@ global $base_url;
         </div>
         <div class="ua-caret">▾</div>
         <div class="ua-dropdown" id="accountDropdown">
+            <a href="<?= $base_url; ?>pages/profil.php" class="logout-btn" style="color:#374151; border-bottom:1px solid #f3f4f6;">
+                <span style="font-size:18px; margin-right:8px;">⚙️</span> Pengaturan
+            </a>
             <a class="logout-btn" id="logoutDropdown">
                 <img src="<?= $base_url; ?>gambar/logout.svg" class="logout-icon" alt="Logout"> Logout
             </a>
