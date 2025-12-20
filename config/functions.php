@@ -501,4 +501,74 @@ function hapusSakip($id) {
     mysqli_query($conn, "DELETE FROM data_sakip WHERE id = $id");
     return mysqli_affected_rows($conn);
 }
+
+// ==========================================
+// 8. CRUD LAPORAN (Keuangan, Kepegawaian, Lakin)
+// ==========================================
+
+function uploadLaporanFile() {
+    $namaFile   = $_FILES['file']['name'];
+    $ukuranFile = $_FILES['file']['size'];
+    $error      = $_FILES['file']['error'];
+    $tmpName    = $_FILES['file']['tmp_name'];
+
+    if ($error === 4) {
+        echo "<script>alert('Pilih file laporan terlebih dahulu!');</script>";
+        return false;
+    }
+
+    $ekstensiValid = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'xls', 'xlsx'];
+    $ekstensiFile  = explode('.', $namaFile);
+    $ekstensiFile  = strtolower(end($ekstensiFile));
+
+    if (!in_array($ekstensiFile, $ekstensiValid)) {
+        echo "<script>alert('Format file tidak didukung! Gunakan PDF, Word, Excel, atau Gambar.');</script>";
+        return false;
+    }
+
+    if ($ukuranFile > 10485760) { // Max 10MB
+        echo "<script>alert('Ukuran file terlalu besar! Maksimal 10MB.');</script>";
+        return false;
+    }
+
+    $namaFileBaru = uniqid() . '.' . $ekstensiFile;
+    move_uploaded_file($tmpName, '../../uploads/laporan/' . $namaFileBaru);
+
+    return $namaFileBaru;
+}
+
+function tambahLaporan($data) {
+    global $conn;
+    
+    $kategori = htmlspecialchars($data["kategori"]);
+    $judul    = htmlspecialchars($data["judul"]);
+    $periode  = htmlspecialchars($data["periode"]); // Misal: Januari 2025
+
+    $file = uploadLaporanFile();
+    if (!$file) return false;
+
+    // Tanggal upload otomatis hari ini (current_timestamp di database)
+    $query = "INSERT INTO data_laporan (kategori, judul_laporan, periode_bulan, nama_file)
+              VALUES ('$kategori', '$judul', '$periode', '$file')";
+    
+    mysqli_query($conn, $query);
+    return mysqli_affected_rows($conn);
+}
+
+function hapusLaporan($id) {
+    global $conn;
+    
+    // Hapus file fisik
+    $result = mysqli_query($conn, "SELECT nama_file FROM data_laporan WHERE id = $id");
+    $row = mysqli_fetch_assoc($result);
+    $file = $row['nama_file'];
+    
+    if ($file && file_exists('../../uploads/laporan/' . $file)) {
+        unlink('../../uploads/laporan/' . $file);
+    }
+
+    mysqli_query($conn, "DELETE FROM data_laporan WHERE id = $id");
+    return mysqli_affected_rows($conn);
+}
+
 ?>
