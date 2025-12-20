@@ -434,4 +434,71 @@ function ubahKeuangan($data) {
     mysqli_query($conn, $query);
     return mysqli_affected_rows($conn);
 }
+// ==========================================
+// 7. CRUD SAKIP (Laporan Kinerja)
+// ==========================================
+
+function uploadSakip() {
+    $namaFile   = $_FILES['file']['name'];
+    $ukuranFile = $_FILES['file']['size'];
+    $error      = $_FILES['file']['error'];
+    $tmpName    = $_FILES['file']['tmp_name'];
+
+    if ($error === 4) {
+        echo "<script>alert('Pilih file terlebih dahulu!');</script>";
+        return false;
+    }
+
+    $ekstensiValid = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip'];
+    $ekstensiFile  = explode('.', $namaFile);
+    $ekstensiFile  = strtolower(end($ekstensiFile));
+
+    if (!in_array($ekstensiFile, $ekstensiValid)) {
+        echo "<script>alert('Format file tidak didukung!');</script>";
+        return false;
+    }
+
+    if ($ukuranFile > 10485760) { // Max 10MB
+        echo "<script>alert('Ukuran file terlalu besar! Maksimal 10MB.');</script>";
+        return false;
+    }
+
+    $namaFileBaru = uniqid() . '.' . $ekstensiFile;
+    move_uploaded_file($tmpName, '../../uploads/sakip/' . $namaFileBaru);
+
+    return $namaFileBaru;
+}
+
+function tambahSakip($data) {
+    global $conn;
+    
+    $tahun    = htmlspecialchars($data["tahun"]);
+    $triwulan = htmlspecialchars($data["triwulan"]);
+    $judul    = htmlspecialchars($data["judul"]);
+    $ket      = htmlspecialchars($data["ket"]);
+
+    $file = uploadSakip();
+    if (!$file) return false;
+
+    $query = "INSERT INTO data_sakip (tahun, triwulan, judul_dokumen, nama_file, keterangan)
+              VALUES ('$tahun', '$triwulan', '$judul', '$file', '$ket')";
+    
+    mysqli_query($conn, $query);
+    return mysqli_affected_rows($conn);
+}
+
+function hapusSakip($id) {
+    global $conn;
+    
+    $result = mysqli_query($conn, "SELECT nama_file FROM data_sakip WHERE id = $id");
+    $row = mysqli_fetch_assoc($result);
+    $file = $row['nama_file'];
+    
+    if ($file && file_exists('../../uploads/sakip/' . $file)) {
+        unlink('../../uploads/sakip/' . $file);
+    }
+
+    mysqli_query($conn, "DELETE FROM data_sakip WHERE id = $id");
+    return mysqli_affected_rows($conn);
+}
 ?>
