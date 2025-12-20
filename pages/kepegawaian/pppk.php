@@ -31,19 +31,140 @@ if (isset($_GET["hapus"])) {
     <link rel="stylesheet" href="<?= $base_url; ?>assets/css/kepegawaian-kgb.css">
     
     <style>
-        /* Modal Preview Ukuran Besar */
+        /* === CSS TAMBAHAN KHUSUS CARD LAYOUT === */
+        
+        /* Container Grid */
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        /* Card Style */
+        .doc-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .doc-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+            border-color: #3b82f6;
+        }
+
+        /* Header Card (Icon + Tanggal) */
+        .doc-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .file-icon-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Warna Ikon Berdasarkan Tipe */
+        .icon-pdf { background: #fee2e2; color: #ef4444; } /* Merah */
+        .icon-img { background: #dbeafe; color: #2563eb; } /* Biru */
+        .icon-doc { background: #e0e7ff; color: #4f46e5; } /* Ungu */
+        .icon-xls { background: #d1fae5; color: #059669; } /* Hijau */
+        .icon-zip { background: #fef3c7; color: #d97706; } /* Kuning */
+
+        .doc-date {
+            font-size: 12px;
+            color: #6b7280;
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* Body Card */
+        .doc-body h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 6px;
+            line-height: 1.4;
+            /* Membatasi teks jadi 2 baris lalu ... */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .doc-body p {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 20px;
+            /* Batasi 3 baris */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Footer Card (Tombol Aksi) */
+        .doc-footer {
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 15px;
+        }
+
+        .btn-card {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: .2s;
+            text-decoration: none;
+            gap: 5px;
+        }
+
+        .btn-preview { background: #eff6ff; color: #1d4ed8; }
+        .btn-preview:hover { background: #dbeafe; }
+
+        .btn-download { background: #f0fdf4; color: #15803d; }
+        .btn-download:hover { background: #dcfce7; }
+
+        .btn-delete { background: #fef2f2; color: #b91c1c; }
+        .btn-delete:hover { background: #fee2e2; }
+
+
+        /* === CSS MODAL PREVIEW (Tetap sama) === */
         .preview-modal-content {
             width: 80%;
-            height: 90vh; /* Tinggi 90% dari layar */
+            height: 90vh;
             background: #fff;
-            padding: 0; /* Nol padding agar full */
+            padding: 0;
             border-radius: 12px;
             position: relative;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-        
         .preview-header {
             padding: 15px 20px;
             background: #f3f4f6;
@@ -52,30 +173,16 @@ if (isset($_GET["hapus"])) {
             justify-content: space-between;
             align-items: center;
         }
-        
         .preview-body {
             flex: 1;
-            background: #525659; /* Warna background abu-abu gelap ala PDF viewer */
+            background: #525659;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: auto;
         }
-
-        /* Iframe untuk PDF */
-        #previewFrame {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* Image preview */
-        #previewImage {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
+        #previewFrame { width: 100%; height: 100%; border: none; }
+        #previewImage { max-width: 100%; max-height: 100%; object-fit: contain; }
     </style>
 </head>
 <body>
@@ -96,10 +203,14 @@ if (isset($_GET["hapus"])) {
         </div>
 
         <h1 class="page-title">Kepegawaian - Data PPPK (Dokumen)</h1>
-        <p class="page-sub">Kelola dokumen laporan PPPK dengan mengupload file.</p>
+        <p class="page-sub">Kelola dokumen laporan PPPK dengan tampilan kartu interaktif.</p>
 
-        <div class="box">
-            <div class="top-actions">
+        <div class="box" style="background: transparent; border:none; box-shadow:none; padding:0;">
+            <div class="top-actions" style="background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <div class="search-box" style="margin-bottom:0; flex:1;">
+                    <img src="<?= $base_url; ?>gambar/search.png" width="18">
+                    <input type="text" id="searchInput" placeholder="Cari dokumen...">
+                </div>
                 <button class="btn btn-primary" id="addDataBtn" style="background: #2563eb;">
                     <img src="<?= $base_url; ?>gambar/import.png" width="16" style="filter: brightness(0) invert(1);"> Upload Dokumen
                 </button>
@@ -113,7 +224,7 @@ if (isset($_GET["hapus"])) {
                     <form action="" method="post" enctype="multipart/form-data">
                         <div class="form-group">
                             <label>Judul Laporan / Dokumen</label>
-                            <input type="text" name="judul" required placeholder="Contoh: Laporan Kinerja PPPK Bulan Januari" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
+                            <input type="text" name="judul" required placeholder="Contoh: Laporan Kinerja Bulan Januari" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
                         </div>
                         <div class="form-group">
                             <label>Pilih File</label>
@@ -140,58 +251,62 @@ if (isset($_GET["hapus"])) {
                         <h3 id="previewTitle" style="font-size:16px; margin:0;">Preview Dokumen</h3>
                         <span class="closePreviewBtn" style="cursor:pointer; font-size:24px;">&times;</span>
                     </div>
-                    <div class="preview-body" id="previewContainer">
-                        </div>
+                    <div class="preview-body" id="previewContainer"></div>
                 </div>
             </div>
 
-            <div class="search-box">
-                <img src="<?= $base_url; ?>gambar/search.png" width="18">
-                <input type="text" id="searchInput" placeholder="Cari dokumen...">
-            </div>
-            
-            <div class="table-responsive">
-                <table id="dataTable">
-                    <thead>
-                        <tr>
-                            <th>NO</th>
-                            <th>JUDUL DOKUMEN</th>
-                            <th>NAMA FILE</th>
-                            <th>TANGGAL UPLOAD</th>
-                            <th>KETERANGAN</th>
-                            <th>AKSI</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <?php $no = 1; ?>
-                        <?php foreach ($data_pppk as $row) : 
-                            $fileExt = strtolower(pathinfo($row['nama_file'], PATHINFO_EXTENSION));
-                            $fileUrl = $base_url . $row['lokasi_file'];
-                        ?>
-                        <tr>
-                            <td><?= $no++; ?></td>
-                            <td style="font-weight:600; color:#2563eb;"><?= $row['judul_laporan']; ?></td>
-                            <td><?= $row['nama_file']; ?></td>
-                            <td><?= date('d/m/Y', strtotime($row['tanggal_upload'])); ?></td>
-                            <td><?= $row['keterangan']; ?></td>
-                            <td>
-                                <a href="javascript:void(0);" onclick="openPreview('<?= $fileUrl; ?>', '<?= $fileExt; ?>', '<?= $row['judul_laporan']; ?>')" title="Lihat File">
-                                    <img src="<?= $base_url; ?>gambar/eye-open.png" class="aksi-btn" alt="Preview" style="width:20px;">
-                                </a>
+            <div class="doc-grid" id="docGrid">
+                <?php if (empty($data_pppk)) : ?>
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #6b7280; background:#fff; border-radius:12px;">
+                        <img src="<?= $base_url; ?>gambar/import.png" style="width:40px; opacity:0.3; margin-bottom:10px;"><br>
+                        Belum ada dokumen yang diupload.
+                    </div>
+                <?php else : ?>
+                    <?php foreach ($data_pppk as $row) : 
+                        $fileExt = strtolower(pathinfo($row['nama_file'], PATHINFO_EXTENSION));
+                        $fileUrl = $base_url . $row['lokasi_file'];
+                        
+                        // Tentukan Icon Berdasarkan Tipe File
+                        $iconClass = 'icon-doc';
+                        $iconText = 'DOC';
+                        if ($fileExt == 'pdf') { $iconClass = 'icon-pdf'; $iconText = 'PDF'; }
+                        elseif (in_array($fileExt, ['jpg','jpeg','png'])) { $iconClass = 'icon-img'; $iconText = 'IMG'; }
+                        elseif (in_array($fileExt, ['xls','xlsx'])) { $iconClass = 'icon-xls'; $iconText = 'XLS'; }
+                    ?>
+                    
+                    <div class="doc-card">
+                        <div class="doc-header">
+                            <div class="file-icon-box <?= $iconClass; ?>">
+                                <?= $iconText; ?>
+                            </div>
+                            <div class="doc-date">
+                                <?= date('d M Y', strtotime($row['tanggal_upload'])); ?>
+                            </div>
+                        </div>
+                        
+                        <div class="doc-body">
+                            <h4 title="<?= $row['judul_laporan']; ?>"><?= $row['judul_laporan']; ?></h4>
+                            <p title="<?= $row['keterangan']; ?>"><?= $row['keterangan'] ? $row['keterangan'] : 'Tidak ada keterangan tambahan.'; ?></p>
+                        </div>
 
-                                <a href="<?= $fileUrl; ?>" target="_blank" title="Download" download>
-                                    <img src="<?= $base_url; ?>gambar/export.png" class="aksi-btn" alt="Download">
-                                </a>
+                        <div class="doc-footer">
+                            <a href="javascript:void(0);" class="btn-card btn-preview" onclick="openPreview('<?= $fileUrl; ?>', '<?= $fileExt; ?>', '<?= $row['judul_laporan']; ?>')">
+                                <img src="<?= $base_url; ?>gambar/eye-open.png" width="14" style="opacity:0.7"> Lihat
+                            </a>
+                            
+                            <a href="<?= $fileUrl; ?>" class="btn-card btn-download" target="_blank" download>
+                                <img src="<?= $base_url; ?>gambar/export.png" width="14" style="opacity:0.7"> Unduh
+                            </a>
 
-                                <a href="pppk.php?hapus=<?= $row['id']; ?>" onclick="return confirm('Yakin ingin menghapus file ini?');" title="Hapus">
-                                    <img src="<?= $base_url; ?>gambar/hapuss.png" class="aksi-btn" alt="Delete">
-                                </a>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                            <a href="pppk.php?hapus=<?= $row['id']; ?>" class="btn-card btn-delete" onclick="return confirm('Yakin ingin menghapus dokumen ini?');">
+                                <img src="<?= $base_url; ?>gambar/hapuss.png" width="14" style="opacity:0.7">
+                            </a>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
+
         </div>
     </div>
 
@@ -210,31 +325,26 @@ if (isset($_GET["hapus"])) {
 
         function openPreview(url, ext, title) {
             previewTitle.innerText = "Preview: " + title;
-            previewContainer.innerHTML = ""; // Bersihkan konten lama
+            previewContainer.innerHTML = "";
 
             if (ext === 'pdf') {
-                // Tampilkan PDF menggunakan Iframe
                 previewContainer.innerHTML = `<iframe id="previewFrame" src="${url}"></iframe>`;
                 previewModal.style.display = "flex";
             } 
             else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-                // Tampilkan Gambar
                 previewContainer.innerHTML = `<img id="previewImage" src="${url}">`;
                 previewModal.style.display = "flex";
             } 
             else {
-                // File Lain (Word/Excel) tidak bisa dipreview di browser tanpa plugin
                 alert("Preview tidak tersedia untuk format file ini (" + ext + ").\nSilakan gunakan tombol Download.");
             }
         }
 
-        // Tutup Modal Preview
         closePreviewBtn.onclick = () => {
             previewModal.style.display = "none";
-            previewContainer.innerHTML = ""; // Hapus iframe agar video/pdf berhenti load
+            previewContainer.innerHTML = "";
         };
 
-        // Klik di luar modal menutup modal
         window.onclick = (e) => { 
             if (e.target == modal) modal.style.display = "none"; 
             if (e.target == previewModal) {
@@ -243,13 +353,18 @@ if (isset($_GET["hapus"])) {
             }
         };
 
-        // --- PENCARIAN ---
+        // --- PENCARIAN (UPDATE KHUSUS CARD) ---
         document.getElementById("searchInput").addEventListener("keyup", function() {
             let filter = this.value.toLowerCase();
-            let rows = document.querySelectorAll("#tableBody tr");
-            rows.forEach(row => {
-                let text = row.innerText.toLowerCase();
-                row.style.display = text.includes(filter) ? "" : "none";
+            let cards = document.querySelectorAll(".doc-card");
+
+            cards.forEach(card => {
+                let text = card.innerText.toLowerCase();
+                if (text.includes(filter)) {
+                    card.style.display = "flex"; // Tampilkan (flex agar layout tetap benar)
+                } else {
+                    card.style.display = "none"; // Sembunyikan
+                }
             });
         });
     </script>

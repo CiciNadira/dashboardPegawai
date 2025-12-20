@@ -325,4 +325,113 @@ function hapusPppk($id) {
         return mysqli_affected_rows($conn);
     } catch (Exception $e) { $error_msg = $e->getMessage(); return 0; }
 }
+
+// ==========================================
+// 6. CRUD KEUANGAN (Spider, BOS, Sakti, dll)
+// ==========================================
+
+function uploadBuktiKeuangan() {
+    $namaFile   = $_FILES['bukti']['name'];
+    $ukuranFile = $_FILES['bukti']['size'];
+    $error      = $_FILES['bukti']['error'];
+    $tmpName    = $_FILES['bukti']['tmp_name'];
+
+    // Cek apakah ada file yang diupload
+    if ($error === 4) {
+        return null; // Boleh kosong (misal saat edit data tapi gak ganti file)
+    }
+
+    $ekstensiValid = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'xls', 'xlsx'];
+    $ekstensiFile  = explode('.', $namaFile);
+    $ekstensiFile  = strtolower(end($ekstensiFile));
+
+    if (!in_array($ekstensiFile, $ekstensiValid)) {
+        echo "<script>alert('Format file tidak didukung! Gunakan PDF, Office, atau Gambar.');</script>";
+        return false;
+    }
+
+    if ($ukuranFile > 5242880) { // Max 5MB
+        echo "<script>alert('Ukuran file terlalu besar! Maksimal 5MB.');</script>";
+        return false;
+    }
+
+    $namaFileBaru = uniqid() . '.' . $ekstensiFile;
+    // Pastikan folder ini sudah dibuat: uploads/keuangan/
+    move_uploaded_file($tmpName, '../../uploads/keuangan/' . $namaFileBaru);
+
+    return $namaFileBaru;
+}
+
+function tambahKeuangan($data) {
+    global $conn;
+    
+    $jenis   = htmlspecialchars($data["jenis_aplikasi"]);
+    $tgl     = htmlspecialchars($data["tanggal"]);
+    $uraian  = htmlspecialchars($data["uraian"]);
+    $status  = htmlspecialchars($data["status"]);
+    $ket     = htmlspecialchars($data["ket"]);
+
+    // Upload Bukti (Wajib saat tambah baru)
+    $bukti = uploadBuktiKeuangan();
+    if (!$bukti) {
+        echo "<script>alert('Harap upload bukti dukung!');</script>";
+        return false;
+    }
+
+    $query = "INSERT INTO data_keuangan (jenis_aplikasi, tanggal_kegiatan, uraian_kegiatan, status, bukti_file, keterangan)
+              VALUES ('$jenis', '$tgl', '$uraian', '$status', '$bukti', '$ket')";
+    
+    mysqli_query($conn, $query);
+    return mysqli_affected_rows($conn);
+}
+
+function hapusKeuangan($id) {
+    global $conn;
+    
+    // Hapus file fisik dulu
+    $result = mysqli_query($conn, "SELECT bukti_file FROM data_keuangan WHERE id = $id");
+    $row = mysqli_fetch_assoc($result);
+    $file = $row['bukti_file'];
+    
+    if ($file && file_exists('../../uploads/keuangan/' . $file)) {
+        unlink('../../uploads/keuangan/' . $file);
+    }
+
+    mysqli_query($conn, "DELETE FROM data_keuangan WHERE id = $id");
+    return mysqli_affected_rows($conn);
+}
+
+function ubahKeuangan($data) {
+    global $conn;
+    $id = $data["id"];
+    $tgl     = htmlspecialchars($data["tanggal"]);
+    $uraian  = htmlspecialchars($data["uraian"]);
+    $status  = htmlspecialchars($data["status"]);
+    $ket     = htmlspecialchars($data["ket"]);
+    $fileLama = htmlspecialchars($data["file_lama"]);
+
+    // Cek apakah user upload file baru
+    if ($_FILES['bukti']['error'] === 4) {
+        $bukti = $fileLama; // Pakai file lama
+    } else {
+        $bukti = uploadBuktiKeuangan(); // Upload file baru
+        if (!$bukti) return false;
+        
+        // Hapus file lama agar tidak menumpuk
+        if (file_exists('../../uploads/keuangan/' . $fileLama)) {
+            unlink('../../uploads/keuangan/' . $fileLama);
+        }
+    }
+
+    $query = "UPDATE data_keuangan SET
+                tanggal_kegiatan = '$tgl',
+                uraian_kegiatan = '$uraian',
+                status = '$status',
+                bukti_file = '$bukti',
+                keterangan = '$ket'
+              WHERE id = $id";
+
+    mysqli_query($conn, $query);
+    return mysqli_affected_rows($conn);
+}
 ?>
