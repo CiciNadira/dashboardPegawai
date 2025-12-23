@@ -626,20 +626,15 @@ function updateTimDashboard($data) {
 }
 
 // ==========================================
-// 10. FUNGSI IMPORT EXCEL (PERBAIKAN)
+// 10. FUNGSI IMPORT EXCEL (PERBAIKAN DECIMAL)
 // ==========================================
 
-// Helper: Mengubah Tanggal Excel (Serial Number / String) ke YYYY-MM-DD
 function excelDateToSQL($dateValue) {
-    if (empty($dateValue)) return '0000-00-00';
-    
-    // Jika formatnya angka (Serial Excel, misal: 45321)
+    if (empty($dateValue) || $dateValue == '-' || $dateValue == '0000-00-00') return '0000-00-00';
     if (is_numeric($dateValue)) {
         $unixDate = ($dateValue - 25569) * 86400;
         return gmdate("Y-m-d", $unixDate);
     }
-    
-    // Jika formatnya string (misal: 12/31/2023 atau 2023-12-31)
     try {
         $date = new DateTime($dateValue);
         return $date->format('Y-m-d');
@@ -650,22 +645,22 @@ function excelDateToSQL($dateValue) {
 
 function importSDM($json_data) {
     global $conn;
+    
     $data = json_decode($json_data, true);
-
-    if (!$data) return ["status" => "error", "msg" => "Data JSON kosong atau rusak."];
+    if (json_last_error() !== JSON_ERROR_NONE || empty($data)) {
+        return ["status" => "error", "msg" => "Data JSON Kosong/Rusak."];
+    }
 
     $berhasil = 0;
     $gagal = 0;
-    $duplikat_list = [];
+    $duplikat = 0;
+    $error_list = [];
 
     foreach ($data as $row) {
-        // Ambil data berdasarkan Header Excel (Case Sensitive!)
         $nama       = htmlspecialchars($row['Nama'] ?? '');
         $nip_bps    = htmlspecialchars($row['NIP BPS'] ?? '');
         $nip        = htmlspecialchars($row['NIP'] ?? '');
         $jabatan    = htmlspecialchars($row['Jabatan'] ?? '');
-        
-        // Konversi Tanggal
         $tmt_jab    = excelDateToSQL($row['TMT Jabatan'] ?? ''); 
         $gol_akhir  = htmlspecialchars($row['Gol Akhir'] ?? '');
         $tmt_gol    = excelDateToSQL($row['TMT Golongan'] ?? '');
@@ -674,36 +669,172 @@ function importSDM($json_data) {
         $tmt_cpns   = excelDateToSQL($row['TMT CPNS'] ?? '');
         $ket        = htmlspecialchars($row['Ket'] ?? '');
 
-        // Validasi NIP Wajib Ada
-        if (empty($nip)) {
-            $gagal++; continue;
-        }
+        // Jika Angka Kredit kosong atau strip (-), paksa jadi 0
+        $ak_ta = $row['AK Terakhir Angka'] ?? 0;
+        if($ak_ta === '' || $ak_ta === '-') $ak_ta = 0;
 
-        // Cek Duplikat NIP
+        $ak_tt = $row['AK Terakhir Tahun'] ?? 0;
+        if($ak_tt === '' || $ak_tt === '-') $ak_tt = 0;
+
+        $ak_ka = $row['AK Konversi Angka'] ?? 0;
+        if($ak_ka === '' || $ak_ka === '-') $ak_ka = 0;
+
+        $ak_kt = $row['AK Konversi Tahun'] ?? 0;
+        if($ak_kt === '' || $ak_kt === '-') $ak_kt = 0;
+
+        if (empty($nip)) { $gagal++; continue; }
+
+        // Cek Duplikat
         $cek = mysqli_query($conn, "SELECT id FROM pegawai WHERE nip = '$nip'");
         if (mysqli_num_rows($cek) > 0) {
-            $gagal++;
-            $duplikat_list[] = $nip; // Catat NIP yang gagal
+            $duplikat++;
         } else {
-            // Insert Data
             $query = "INSERT INTO pegawai 
-                      (nama_lengkap, nip_bps, nip, jabatan, tmt_jabatan, golongan_akhir, tmt_golongan, status_kepegawaian, pendidikan_sk, tmt_cpns, keterangan)
+                      (nama_lengkap, nip_bps, nip, jabatan, tmt_jabatan, golongan_akhir, tmt_golongan, status_kepegawaian, pendidikan_sk, tmt_cpns, ak_terakhir_angka, ak_terakhir_tahun, ak_konversi_angka, ak_konversi_tahun, keterangan)
                       VALUES 
-                      ('$nama', '$nip_bps', '$nip', '$jabatan', '$tmt_jab', '$gol_akhir', '$tmt_gol', '$status', '$pendidikan', '$tmt_cpns', '$ket')";
+                      ('$nama', '$nip_bps', '$nip', '$jabatan', '$tmt_jab', '$gol_akhir', '$tmt_gol', '$status', '$pendidikan', '$tmt_cpns', '$ak_ta', '$ak_tt', '$ak_ka', '$ak_kt', '$ket')";
             
             if (mysqli_query($conn, $query)) {
                 $berhasil++;
             } else {
                 $gagal++;
+                $error_list[] = mysqli_error($conn);
             }
         }
     }
 
-    $pesan = "Berhasil: $berhasil data. Gagal: $gagal data.";
-    if (!empty($duplikat_list)) {
-        $pesan .= "\\nNIP Duplikat (dilewati): " . implode(", ", $duplikat_list);
-    }
+    $pesan = "Import Selesai!\\n✅ Masuk: $berhasil\\n⚠️ Duplikat: $duplikat\\n❌ Gagal: $gagal";
+    if(!empty($error_list)) $pesan .= "\\nInfo Error Pertama: " . $error_list[0];
 
     return ["status" => "success", "msg" => $pesan];
+}
+
+// 11. IMPORT FUNGSIONAL (FIX DECIMAL)
+function importFungsional($json_data) {
+    global $conn;
+    $data = json_decode($json_data, true);
+    if (empty($data)) return ["status" => "error", "msg" => "Data kosong/Format Salah"];
+
+    $berhasil = 0; $gagal = 0; $skip = 0;
+    $error_log = "";
+
+    foreach ($data as $row) {
+        $nip = htmlspecialchars($row['NIP'] ?? '');
+        if(empty($nip)) { $gagal++; continue; }
+        $cek = mysqli_query($conn, "SELECT id FROM pegawai WHERE nip = '$nip'");
+        $peg = mysqli_fetch_assoc($cek);
+
+        if ($peg) {
+            $pegawai_id = $peg['id'];
+            $tmt        = excelDateToSQL($row['TMT Fungsional'] ?? '');
+            
+            $ak_ta = $row['AK Terakhir Angka'] ?? 0;
+            if($ak_ta === '' || $ak_ta === '-') $ak_ta = 0;
+
+            $ak_tt = $row['AK Terakhir Tahun'] ?? 0;
+            if($ak_tt === '' || $ak_tt === '-') $ak_tt = 0;
+
+            $ak_ka = $row['AK Konversi Angka'] ?? 0;
+            if($ak_ka === '' || $ak_ka === '-') $ak_ka = 0;
+
+            $ak_kt = $row['AK Konversi Tahun'] ?? 0;
+            if($ak_kt === '' || $ak_kt === '-') $ak_kt = 0;
+
+            $ket = htmlspecialchars($row['Ket'] ?? '');
+
+            $query = "INSERT INTO data_fungsional 
+                      (pegawai_id, tmt_fungsional, ak_terakhir_angka, ak_terakhir_tahun, ak_konversi_angka, ak_konversi_tahun, keterangan) 
+                      VALUES 
+                      ('$pegawai_id', '$tmt', '$ak_ta', '$ak_tt', '$ak_ka', '$ak_kt', '$ket')";
+            
+            if(mysqli_query($conn, $query)) {
+                $berhasil++;
+            } else {
+                $gagal++;
+                $error_log .= mysqli_error($conn) . " | ";
+            }
+        } else {
+            $skip++;
+        }
+    }
+    
+    $pesan = "Import Selesai!\\n✅ Berhasil: $berhasil\\n⚠️ NIP Tidak Dikenal: $skip\\n❌ Gagal: $gagal";
+    if(!empty($error_log)) $pesan .= "\\nInfo Error: " . substr($error_log, 0, 150);
+
+    return ["msg" => $pesan];
+}
+
+// ==========================================
+// 12. IMPORT KGB (UPDATE: PAKAI NAMA KOLOM)
+// ==========================================
+function importKGB($json_data) {
+    global $conn;
+    $data = json_decode($json_data, true);
+    if (empty($data)) return ["status" => "error", "msg" => "Data Excel kosong/Format salah"];
+
+    $berhasil = 0; $gagal = 0; $skip = 0;
+
+    foreach ($data as $row) {
+        $nip = htmlspecialchars($row['NIP'] ?? '');
+        if(empty($nip)) { $gagal++; continue; }
+
+        // Cari ID Pegawai
+        $cek = mysqli_query($conn, "SELECT id FROM pegawai WHERE nip = '$nip'");
+        $peg = mysqli_fetch_assoc($cek);
+
+        if ($peg) {
+            $pegawai_id = $peg['id'];
+            $mkg        = htmlspecialchars($row['MKG'] ?? '');
+            $akhir      = excelDateToSQL($row['KGB Terakhir'] ?? '');
+            $yad        = excelDateToSQL($row['KGB YAD'] ?? '');
+            $ket        = htmlspecialchars($row['Ket'] ?? '');
+
+            // Gunakan Nama Kolom Eksplisit (Lebih Aman)
+            $query = "INSERT INTO data_kgb (pegawai_id, mkg, kgb_terakhir, kgb_yad, keterangan) 
+                      VALUES ('$pegawai_id', '$mkg', '$akhir', '$yad', '$ket')";
+            
+            if(mysqli_query($conn, $query)) $berhasil++;
+            else $gagal++;
+        } else {
+            $skip++; // NIP tidak ditemukan
+        }
+    }
+    return ["msg" => "Import KGB Selesai!\\n✅ Berhasil: $berhasil\\n⚠️ NIP Tidak Dikenal: $skip\\n❌ Gagal: $gagal"];
+}
+
+// ==========================================
+// 13. IMPORT KP (UPDATE: PAKAI NAMA KOLOM)
+// ==========================================
+function importKP($json_data) {
+    global $conn;
+    $data = json_decode($json_data, true);
+    if (empty($data)) return ["status" => "error", "msg" => "Data Excel kosong/Format salah"];
+
+    $berhasil = 0; $gagal = 0; $skip = 0;
+
+    foreach ($data as $row) {
+        $nip = htmlspecialchars($row['NIP'] ?? '');
+        if(empty($nip)) { $gagal++; continue; }
+
+        $cek = mysqli_query($conn, "SELECT id FROM pegawai WHERE nip = '$nip'");
+        $peg = mysqli_fetch_assoc($cek);
+
+        if ($peg) {
+            $pegawai_id = $peg['id'];
+            $akhir      = excelDateToSQL($row['KP Terakhir'] ?? '');
+            $yad        = excelDateToSQL($row['KP YAD'] ?? '');
+            $ket        = htmlspecialchars($row['Ket'] ?? '');
+
+            // Gunakan Nama Kolom Eksplisit
+            $query = "INSERT INTO data_kp (pegawai_id, kp_terakhir, kp_yad, keterangan) 
+                      VALUES ('$pegawai_id', '$akhir', '$yad', '$ket')";
+            
+            if(mysqli_query($conn, $query)) $berhasil++;
+            else $gagal++;
+        } else {
+            $skip++;
+        }
+    }
+    return ["msg" => "Import KP Selesai!\\n✅ Berhasil: $berhasil\\n⚠️ NIP Tidak Dikenal: $skip\\n❌ Gagal: $gagal"];
 }
 ?>
