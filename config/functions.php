@@ -837,4 +837,34 @@ function importKP($json_data) {
     }
     return ["msg" => "Import KP Selesai!\\n✅ Berhasil: $berhasil\\n⚠️ NIP Tidak Dikenal: $skip\\n❌ Gagal: $gagal"];
 }
+
+// ==========================================
+// 14. FITUR RESET PASSWORD (OFFLINE MODE)
+// ==========================================
+function resetPasswordViaToken($data) {
+    global $conn;
+
+    $username  = htmlspecialchars($data["username"]);
+    $kode_unik = htmlspecialchars($data["kode_unik"]);
+    $pass_baru = mysqli_real_escape_string($conn, $data["password_baru"]);
+
+    $KODE_RAHASIA_SISTEM = "abangtampan"; 
+
+    if ($kode_unik !== $KODE_RAHASIA_SISTEM) {
+        echo "<script>alert('Kode Rahasia SALAH! Hubungi pembuat aplikasi.');</script>";
+        return false;
+    }
+
+    $cek_user = mysqli_query($conn, "SELECT id FROM users WHERE username = '$username'");
+    if (mysqli_num_rows($cek_user) === 0) {
+        echo "<script>alert('Username tidak ditemukan!');</script>";
+        return false;
+    }
+
+    $password_hash = password_hash($pass_baru, PASSWORD_DEFAULT);
+    $query = "UPDATE users SET password = '$password_hash' WHERE username = '$username'";
+    
+    mysqli_query($conn, $query);
+    return mysqli_affected_rows($conn);
+}
 ?>
