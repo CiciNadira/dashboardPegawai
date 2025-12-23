@@ -1,33 +1,28 @@
 <?php
 session_start();
-// Panggil file koneksi (pastikan path/lokasinya benar)
 require 'config/functions.php';
 
-// Cek jika tombol login ditekan
 if (isset($_POST["login"])) {
 
     $username = $_POST["username"];
     $password = $_POST["password"];
 
-    // Cek username di database
-    // Kita gunakan md5 karena di database tadi passwordnya di-encrypt md5
-    // Note: Untuk keamanan tingkat lanjut nanti bisa pakai password_verify (bcrypt)
-    $password_md5 = md5($password);
+    $result = mysqli_query($conn, "SELECT * FROM users WHERE username = '$username'");
 
-    $result = mysqli_query($conn, "SELECT * FROM users WHERE username = '$username' AND password = '$password_md5'");
-
-    // Jika username & password cocok (ketemu 1 baris data)
     if (mysqli_num_rows($result) === 1) {
-        // Set Session
-        $_SESSION["login"] = true;
-        $_SESSION["user"] = $username;
+        
+        $row = mysqli_fetch_assoc($result);
+        if (password_verify($password, $row["password"]) || $row["password"] === md5($password)) {
+            
+            $_SESSION["login"] = true;
+            $_SESSION["user"] = $row["username"]; 
+            $_SESSION["user_id"] = $row["id"];    
 
-        // Redirect ke Dashboard (Ubah dashboard.html jadi dashboard.php nanti)
-        header("Location: dashboard.php");
-        exit;
+            header("Location: dashboard.php");
+            exit;
+        }
     }
 
-    // Jika salah
     $error = true;
 }
 ?>
@@ -74,18 +69,15 @@ if (isset($_POST["login"])) {
 </div>
 
 <script>
-    // SCRIPT HANYA UNTUK UI (SHOW PASSWORD), BUKAN LOGIKA LOGIN
     const passwordInput = document.getElementById("password");
     const togglePass = document.getElementById("togglePass");
 
     togglePass.addEventListener("click", () => {
         if (passwordInput.type === "password") {
             passwordInput.type = "text";
-            // Ganti icon mata terbuka (pastikan file gambarnya ada)
             togglePass.src = "gambar/eye-open.png"; 
         } else {
             passwordInput.type = "password";
-            // Ganti icon mata tertutup
             togglePass.src = "gambar/eye-closed.png"; 
         }
     });
