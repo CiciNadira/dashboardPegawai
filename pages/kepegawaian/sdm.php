@@ -3,7 +3,7 @@ require '../../config/functions.php';
 
 if (isset($_POST["excel_json"])) {
     $result = importSDM($_POST['excel_json']);
-    
+
     $pesan = "";
     if (isset($result['msg'])) {
         $pesan = $result['msg'];
@@ -49,6 +49,7 @@ if (isset($_GET["hapus"])) {
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -66,12 +67,12 @@ if (isset($_GET["hapus"])) {
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.5);
-            
+            background-color: rgba(0, 0, 0, 0.5);
+
             align-items: center;
             justify-content: center;
         }
-        
+
         #importExcelModal .modal-content {
             margin: 0;
         }
@@ -94,7 +95,7 @@ if (isset($_GET["hapus"])) {
                 </div>
             </div>
         </div>
-        
+
         <h1 class="page-title">Kepegawaian - Data SDM</h1>
         <p class="page-sub">Kelola data dengan menambah, mengubah, atau menghapus informasi</p>
 
@@ -129,7 +130,7 @@ if (isset($_GET["hapus"])) {
                         <p>Klik untuk memilih file Excel</p>
                         <small>Format: .xlsx atau .xls</small>
                     </div>
-                    
+
                     <div class="modal-footer">
                         <button class="cancelBtn">Batal</button>
                         <button class="importDataBtn">Import Data</button>
@@ -153,9 +154,13 @@ if (isset($_GET["hapus"])) {
                         <div class="form-group"><label>TMT Gol.</label><input type="date" name="tmt_gol" id="addTmtGol"></div>
                         <div class="form-group"><label>Status</label>
                             <select name="status" id="addStatus">
-                                <option value="PNS">PNS</option><option value="CPNS">CPNS</option><option value="PPPK">PPPK</option>
-                                <option value="TB Dalam Negeri">TB Dalam Negeri</option><option value="TB Luar Negeri">TB Luar Negeri</option>
-                                <option value="Mutasi">Mutasi</option><option value="Pensiun">Pensiun</option>
+                                <option value="PNS">PNS</option>
+                                <option value="CPNS">CPNS</option>
+                                <option value="PPPK">PPPK</option>
+                                <option value="TB Dalam Negeri">TB Dalam Negeri</option>
+                                <option value="TB Luar Negeri">TB Luar Negeri</option>
+                                <option value="Mutasi">Mutasi</option>
+                                <option value="Pensiun">Pensiun</option>
                             </select>
                         </div>
                         <div class="form-group"><label>Pend.(SK)</label><input type="text" name="pend_sk" id="addPendSk"></div>
@@ -181,15 +186,26 @@ if (isset($_GET["hapus"])) {
                 <table id="dataTable">
                     <thead>
                         <tr>
-                            <th rowspan="2">NAMA</th><th rowspan="2">NIP BPS</th><th rowspan="2">NIP</th><th rowspan="2">JABATAN</th>
-                            <th rowspan="2">TMT JAB.</th><th rowspan="2">GOL.AKHIR</th><th rowspan="2">TMT GOL.</th><th rowspan="2">STATUS</th>
-                            <th rowspan="2">PEND.(SK)</th><th rowspan="2">TMT CPNS</th>
-                            <th colspan="2">AK TERAKHIR</th><th colspan="2">AK KONVERSI</th>
-                            <th rowspan="2">KET</th><th rowspan="2">AKSI</th>
+                            <th rowspan="2">NAMA</th>
+                            <th rowspan="2">NIP BPS</th>
+                            <th rowspan="2">NIP</th>
+                            <th rowspan="2">JABATAN</th>
+                            <th rowspan="2">TMT JAB.</th>
+                            <th rowspan="2">GOL.AKHIR</th>
+                            <th rowspan="2">TMT GOL.</th>
+                            <th rowspan="2">STATUS</th>
+                            <th rowspan="2">PEND.(SK)</th>
+                            <th rowspan="2">TMT CPNS</th>
+                            <th colspan="2">AK TERAKHIR</th>
+                            <th colspan="2">AK KONVERSI</th>
+                            <th rowspan="2">KET</th>
+                            <th rowspan="2">AKSI</th>
                         </tr>
                         <tr>
-                            <th style="color: #6b7280;">Angka</th><th style="color: #6b7280;">Tahun</th>
-                            <th style="color: #6b7280;">Angka</th><th style="color: #6b7280;">Tahun</th>
+                            <th style="color: #6b7280;">Angka</th>
+                            <th style="color: #6b7280;">Tahun</th>
+                            <th style="color: #6b7280;">Angka</th>
+                            <th style="color: #6b7280;">Tahun</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -231,7 +247,7 @@ if (isset($_GET["hapus"])) {
         let globalExcelData = null;
 
         document.addEventListener('DOMContentLoaded', function() {
-            
+
             const importModal = document.getElementById("importExcelModal");
             const importBtn = document.getElementById("importBtn");
             const closeImportSpan = importModal.querySelector(".closeBtn");
@@ -242,7 +258,7 @@ if (isset($_GET["hapus"])) {
 
             importBtn.addEventListener("click", () => {
                 importModal.style.display = "flex";
-                globalExcelData = null; 
+                globalExcelData = null;
                 uploadArea.innerHTML = '<div class="upload-icon">⬆</div><p>Klik untuk memilih file Excel</p><small>Format: .xlsx atau .xls</small>';
                 uploadArea.style.border = "2px dashed #ccc";
                 fileInput.value = "";
@@ -256,16 +272,21 @@ if (isset($_GET["hapus"])) {
 
             fileInput.addEventListener("change", function(e) {
                 const file = e.target.files[0];
-                if(!file) return;
+                if (!file) return;
 
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
+                    const workbook = XLSX.read(data, {
+                        type: 'array'
+                    });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { raw: false, dateNF: 'yyyy-mm-dd' });
-                    
+
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+                        raw: false,
+                        dateNF: 'yyyy-mm-dd'
+                    });
+
                     if (jsonData.length > 0) {
                         globalExcelData = jsonData;
                         uploadArea.innerHTML = `<div class="upload-icon" style="color:green">✅</div><p>File: ${file.name}</p><small>Siap import ${jsonData.length} data.</small>`;
@@ -282,7 +303,7 @@ if (isset($_GET["hapus"])) {
                     alert("Pilih file dulu!");
                     return;
                 }
-                if(confirm(`Yakin import ${globalExcelData.length} data?`)) {
+                if (confirm(`Yakin import ${globalExcelData.length} data?`)) {
                     document.getElementById("excelJson").value = JSON.stringify(globalExcelData);
                     document.getElementById("formImport").submit();
                 }
@@ -291,7 +312,7 @@ if (isset($_GET["hapus"])) {
             document.getElementById("downloadTemplate").addEventListener("click", function(e) {
                 e.preventDefault();
                 const headers = [
-                    "Nama", "NIP BPS", "NIP", "Jabatan", "TMT Jabatan", "Gol Akhir", "TMT Golongan", "Status", 
+                    "Nama", "NIP BPS", "NIP", "Jabatan", "TMT Jabatan", "Gol Akhir", "TMT Golongan", "Status",
                     "Pendidikan", "TMT CPNS", "AK Terakhir Angka", "AK Terakhir Tahun", "AK Konversi Angka", "AK Konversi Tahun", "Ket"
                 ];
                 const dummyData = [
@@ -309,7 +330,7 @@ if (isset($_GET["hapus"])) {
             const cancelAddBtn = addModal.querySelector(".add-cancel");
 
             addBtn.addEventListener("click", function() {
-                document.getElementById("dataId").value = ""; 
+                document.getElementById("dataId").value = "";
                 document.querySelector("#addDataModal form").reset();
                 document.getElementById("formTitle").innerText = "Tambah Data SDM";
                 document.getElementById("saveDataBtn").innerText = "Simpan";
@@ -318,7 +339,7 @@ if (isset($_GET["hapus"])) {
 
             closeAddBtn.onclick = () => addModal.style.display = "none";
             cancelAddBtn.onclick = () => addModal.style.display = "none";
-            
+
             window.onclick = (e) => {
                 if (e.target == addModal) addModal.style.display = "none";
                 if (e.target == importModal) importModal.style.display = "none";
@@ -336,14 +357,33 @@ if (isset($_GET["hapus"])) {
             });
 
             document.getElementById("exportBtn").addEventListener("click", function() {
-                if (dbData.length === 0) { alert("Data kosong"); return; }
+                if (dbData.length === 0) {
+                    alert("Data kosong");
+                    return;
+                }
+
                 const dataToExport = dbData.map(row => ({
-                    "Nama": row.nama_lengkap, "NIP": row.nip, "Jabatan": row.jabatan
+                    "Nama": row.nama_lengkap,
+                    "NIP BPS": row.nip_bps,
+                    "NIP": row.nip,
+                    "Jabatan": row.jabatan,
+                    "TMT Jabatan": row.tmt_jabatan,
+                    "Gol. Akhir": row.golongan_akhir,
+                    "TMT Golongan": row.tmt_golongan,
+                    "Status": row.status_kepegawaian,
+                    "Pendidikan (SK)": row.pendidikan_sk,
+                    "TMT CPNS": row.tmt_cpns,
+                    "AK Terakhir Angka": row.ak_terakhir_angka,
+                    "AK Terakhir Tahun": row.ak_terakhir_tahun,
+                    "AK Konversi Angka": row.ak_konversi_angka,
+                    "AK Konversi Tahun": row.ak_konversi_tahun,
+                    "Keterangan": row.keterangan
                 }));
+
                 const ws = XLSX.utils.json_to_sheet(dataToExport);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Data SDM");
-                XLSX.writeFile(wb, "Data_SDM_BPS.xlsx");
+                XLSX.writeFile(wb, "Data_SDM_Lengkap.xlsx");
             });
         });
 
@@ -414,4 +454,5 @@ if (isset($_GET["hapus"])) {
         }
     </script>
 </body>
+
 </html>

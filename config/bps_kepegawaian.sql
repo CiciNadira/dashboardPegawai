@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 20, 2025 at 06:18 PM
+-- Generation Time: Dec 23, 2025 at 12:25 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.3.20
 
@@ -131,13 +131,6 @@ CREATE TABLE `dokumen_pppk` (
   `keterangan` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Dumping data for table `dokumen_pppk`
---
-
-INSERT INTO `dokumen_pppk` (`id`, `judul_laporan`, `nama_file`, `lokasi_file`, `tanggal_upload`, `keterangan`) VALUES
-(1, 'Peta Desa', '6945a7cf47214.png', 'uploads/pppk/6945a7cf47214.png', '2025-12-20', 'dfghjgfdsfghjhgf');
-
 -- --------------------------------------------------------
 
 --
@@ -162,7 +155,8 @@ CREATE TABLE `pegawai` (
   `ak_konversi_tahun` year DEFAULT NULL,
   `keterangan` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `jabatan_dashboard` enum('Sekretaris','Bendahara','Staf','Tidak') DEFAULT 'Tidak'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -187,7 +181,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `password`, `nama_lengkap`, `nip`, `jabatan`, `role`, `created_at`) VALUES
-(1, 'admin', '0192023a7bbd73250516f069df18b500', 'Rida Ainun Sembiring, SH.', '197812252011012005', 'Kepala Sub Bagian Umum', 'admin', '2025-12-19 12:53:31');
+(1, 'admin', '$2y$10$T2w4hqEH9VF5xd52ZqOjUupA4xLVVTHQJZ2Flrqf91DhpugwJhuvq', 'Rida Ainun Sembiring, SH.', '197812252011012005', 'Kepala Sub Bagian Umum', 'admin', '2025-12-19 12:53:31');
 
 --
 -- Indexes for dumped tables
@@ -260,37 +254,37 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `data_fungsional`
 --
 ALTER TABLE `data_fungsional`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `data_keuangan`
 --
 ALTER TABLE `data_keuangan`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `data_kgb`
 --
 ALTER TABLE `data_kgb`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `data_kp`
 --
 ALTER TABLE `data_kp`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `data_laporan`
 --
 ALTER TABLE `data_laporan`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `data_sakip`
 --
 ALTER TABLE `data_sakip`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `dokumen_pppk`
@@ -302,7 +296,7 @@ ALTER TABLE `dokumen_pppk`
 -- AUTO_INCREMENT for table `pegawai`
 --
 ALTER TABLE `pegawai`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `users`

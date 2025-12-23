@@ -4,7 +4,7 @@ require '../../config/functions.php';
 // === 1. LOGIC IMPORT EXCEL ===
 if (isset($_POST["excel_json"])) {
     $result = importFungsional($_POST['excel_json']); // Panggil fungsi khusus
-    
+
     $pesan = "";
     if (isset($result['msg'])) {
         $pesan = $result['msg'];
@@ -48,6 +48,7 @@ if (isset($_GET["hapus"])) {
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -58,10 +59,22 @@ if (isset($_GET["hapus"])) {
     <style>
         /* CSS MODAL IMPORT TENGAH (Sama seperti SDM) */
         #importExcelModal {
-            display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
-            overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
         }
-        #importExcelModal .modal-content { margin: 0; }
+
+        #importExcelModal .modal-content {
+            margin: 0;
+        }
     </style>
 </head>
 
@@ -132,7 +145,7 @@ if (isset($_GET["hapus"])) {
                     <h2 id="formTitle">Tambah Data Fungsional</h2>
                     <form action="" method="post">
                         <input type="hidden" name="id" id="dataId">
-                        
+
                         <div class="form-group">
                             <label>Pilih Pegawai</label>
                             <select name="pegawai_id" id="addPegawaiId" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
@@ -144,7 +157,7 @@ if (isset($_GET["hapus"])) {
                         </div>
 
                         <div class="form-group"><label>TMT Fungsional</label><input type="date" name="tmt_fungsional" id="addTmtFungsional"></div>
-                        
+
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                             <div class="form-group"><label>AK Terakhir (Angka)</label><input type="text" name="ak_terakhir_angka" id="addAkTerakhirAngka"></div>
                             <div class="form-group"><label>AK Terakhir (Tahun)</label><input type="number" name="ak_terakhir_tahun" id="addAkTerakhirTahun"></div>
@@ -170,26 +183,44 @@ if (isset($_GET["hapus"])) {
                 <table id="dataTable">
                     <thead>
                         <tr>
-                            <th rowspan="2">NAMA</th><th rowspan="2">NIP</th><th rowspan="2">PANGKAT</th><th rowspan="2">JABATAN</th>
-                            <th rowspan="2">TMT JAB.</th><th colspan="2">AK TERAKHIR</th><th colspan="2">AK KONVERSI</th>
-                            <th rowspan="2">KET</th><th rowspan="2">AKSI</th>
+                            <th rowspan="2">NAMA</th>
+                            <th rowspan="2">NIP</th>
+                            <th rowspan="2">PANGKAT/GOL</th>
+                            <th rowspan="2">JABATAN</th>
+                            <th rowspan="2">TMT FUNGSIONAL</th>
+                            <th colspan="2">AK TERAKHIR</th>
+                            <th colspan="2">AK KONVERSI</th>
+                            <th rowspan="2">KET</th>
+                            <th rowspan="2">AKSI</th>
                         </tr>
-                        <tr><th>Angka</th><th>Tahun</th><th>Angka</th><th>Tahun</th></tr>
+                        <tr>
+                            <th>Angka</th>
+                            <th>Tahun</th>
+                            <th>Angka</th>
+                            <th>Tahun</th>
+                        </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <?php $i = 0; foreach ($fungsional as $row) : ?>
+                        <?php $i = 0;
+                        foreach ($fungsional as $row) : ?>
                             <tr>
-                                <td><?= $row["nama_lengkap"]; ?></td><td><?= $row["nip"]; ?></td><td><?= $row["golongan_akhir"]; ?></td><td><?= $row["jabatan"]; ?></td>
+                                <td><?= $row["nama_lengkap"]; ?></td>
+                                <td><?= $row["nip"]; ?></td>
+                                <td><?= $row["golongan_akhir"]; ?></td>
+                                <td><?= $row["jabatan"]; ?></td>
                                 <td><?= ($row["tmt_fungsional"] != '0000-00-00') ? date('d/m/Y', strtotime($row["tmt_fungsional"])) : '-'; ?></td>
-                                <td><?= $row["ak_terakhir_angka"]; ?></td><td><?= $row["ak_terakhir_tahun"]; ?></td>
-                                <td><?= $row["ak_konversi_angka"]; ?></td><td><?= $row["ak_konversi_tahun"]; ?></td>
+                                <td><?= $row["ak_terakhir_angka"]; ?></td>
+                                <td><?= $row["ak_terakhir_tahun"]; ?></td>
+                                <td><?= $row["ak_konversi_angka"]; ?></td>
+                                <td><?= $row["ak_konversi_tahun"]; ?></td>
                                 <td><?= $row["keterangan"]; ?></td>
                                 <td>
                                     <img src="<?= $base_url; ?>gambar/edit.png" class="aksi-btn edit" onclick="openEditModal(<?= $i; ?>)">
                                     <a href="fungsional.php?hapus=<?= $row['id']; ?>" onclick="return confirm('Hapus?');"><img src="<?= $base_url; ?>gambar/hapuss.png" class="aksi-btn"></a>
                                 </td>
                             </tr>
-                        <?php $i++; endforeach; ?>
+                        <?php $i++;
+                        endforeach; ?>
                     </tbody>
                 </table>
             </div>
@@ -220,12 +251,17 @@ if (isset($_GET["hapus"])) {
 
             fileInput.addEventListener("change", function(e) {
                 const file = e.target.files[0];
-                if(!file) return;
+                if (!file) return;
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: false, dateNF: 'yyyy-mm-dd' });
+                    const workbook = XLSX.read(data, {
+                        type: 'array'
+                    });
+                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {
+                        raw: false,
+                        dateNF: 'yyyy-mm-dd'
+                    });
                     if (jsonData.length > 0) {
                         globalExcelData = jsonData;
                         uploadArea.innerHTML = `<div class="upload-icon" style="color:green">✅</div><p>File: ${file.name}</p><small>Siap import ${jsonData.length} data.</small>`;
@@ -237,7 +273,7 @@ if (isset($_GET["hapus"])) {
 
             document.querySelector(".importDataBtn").onclick = () => {
                 if (!globalExcelData) return alert("Pilih file dulu!");
-                if(confirm(`Yakin import ${globalExcelData.length} data?`)) {
+                if (confirm(`Yakin import ${globalExcelData.length} data?`)) {
                     document.getElementById("excelJson").value = JSON.stringify(globalExcelData);
                     document.getElementById("formImport").submit();
                 }
@@ -247,7 +283,9 @@ if (isset($_GET["hapus"])) {
             document.getElementById("downloadTemplate").addEventListener("click", function(e) {
                 e.preventDefault();
                 const headers = ["NIP", "TMT Fungsional", "AK Terakhir Angka", "AK Terakhir Tahun", "AK Konversi Angka", "AK Konversi Tahun", "Ket"];
-                const dummy = [["198501012010011001", "2023-01-01", "25.500", "2023", "", "", "Contoh"]];
+                const dummy = [
+                    ["198501012010011001", "2023-01-01", "25.500", "2023", "", "", "Contoh"]
+                ];
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers, ...dummy]), "Template Fungsional");
                 XLSX.writeFile(wb, "Template_Fungsional.xlsx");
@@ -265,8 +303,8 @@ if (isset($_GET["hapus"])) {
             document.querySelector(".closeAddBtn").onclick = () => addModal.style.display = "none";
             document.querySelector(".add-cancel").onclick = () => addModal.style.display = "none";
             window.onclick = (e) => {
-                if(e.target == addModal) addModal.style.display = "none";
-                if(e.target == importModal) importModal.style.display = "none";
+                if (e.target == addModal) addModal.style.display = "none";
+                if (e.target == importModal) importModal.style.display = "none";
             };
 
             document.getElementById("searchInput").addEventListener("keyup", function() {
@@ -278,7 +316,20 @@ if (isset($_GET["hapus"])) {
 
             document.getElementById("exportBtn").onclick = () => {
                 if (dbData.length === 0) return alert("Data kosong");
-                const dataExport = dbData.map(r => ({ "Nama": r.nama_lengkap, "NIP": r.nip, "TMT": r.tmt_fungsional }));
+
+                const dataExport = dbData.map(row => ({
+                    "Nama": row.nama_lengkap,
+                    "NIP": row.nip,
+                    "Pangkat/Gol": row.golongan_akhir,
+                    "Jabatan": row.jabatan,
+                    "TMT Fungsional": row.tmt_fungsional,
+                    "AK Terakhir (Angka)": row.ak_terakhir_angka,
+                    "AK Terakhir (Tahun)": row.ak_terakhir_tahun,
+                    "AK Konversi (Angka)": row.ak_konversi_angka,
+                    "AK Konversi (Tahun)": row.ak_konversi_tahun,
+                    "Keterangan": row.keterangan
+                }));
+
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataExport), "Data Fungsional");
                 XLSX.writeFile(wb, "Data_Fungsional.xlsx");
@@ -301,4 +352,5 @@ if (isset($_GET["hapus"])) {
         }
     </script>
 </body>
+
 </html>
