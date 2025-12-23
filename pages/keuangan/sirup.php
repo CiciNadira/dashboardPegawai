@@ -1,30 +1,23 @@
 <?php
 require '../../config/functions.php';
 
-// === SETTING HALAMAN (Ganti ini untuk file BOS, Sakti, dll) ===
 $jenis_aplikasi = "Sirup"; 
 $judul_halaman  = "Keuangan - Aplikasi SIRUP";
-// ============================================================
 
-// Ambil Data Sesuai Jenis Aplikasi
 $data_keuangan = query("SELECT * FROM data_keuangan WHERE jenis_aplikasi = '$jenis_aplikasi' ORDER BY id DESC");
 
-// Logic Tambah/Edit
 if (isset($_POST["simpan_data"])) {
     if ($_POST['id'] != "") {
-        // Mode Update
-        if (ubahKeuangan($_POST) > 0) echo "<script>alert('Data berhasil diupdate!'); location.href='spider.php';</script>";
-        else echo "<script>alert('Gagal/Tidak ada perubahan!'); location.href='spider.php';</script>";
+        if (ubahKeuangan($_POST) > 0) echo "<script>alert('Data berhasil diupdate!'); location.href='sirup.php';</script>";
+        else echo "<script>alert('Gagal/Tidak ada perubahan!'); location.href='sirup.php';</script>";
     } else {
-        // Mode Tambah
-        if (tambahKeuangan($_POST) > 0) echo "<script>alert('Data berhasil disimpan!'); location.href='spider.php';</script>";
+        if (tambahKeuangan($_POST) > 0) echo "<script>alert('Data berhasil disimpan!'); location.href='sirup.php';</script>";
     }
 }
 
-// Logic Hapus
 if (isset($_GET["hapus"])) {
-    if (hapusKeuangan($_GET["hapus"]) > 0) echo "<script>alert('Data berhasil dihapus!'); location.href='spider.php';</script>";
-    else echo "<script>alert('Gagal menghapus data!'); location.href='spider.php';</script>";
+    if (hapusKeuangan($_GET["hapus"]) > 0) echo "<script>alert('Data berhasil dihapus!'); location.href='sirup.php';</script>";
+    else echo "<script>alert('Gagal menghapus data!'); location.href='sirup.php';</script>";
 }
 ?>
 
@@ -39,7 +32,6 @@ if (isset($_GET["hapus"])) {
     <link rel="stylesheet" href="<?= $base_url; ?>assets/css/kepegawaian-kgb.css">
     
     <style>
-        /* === STYLE KHUSUS CARD LAYOUT === */
         .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
         
         .doc-card { 
@@ -56,19 +48,16 @@ if (isset($_GET["hapus"])) {
         }
         .doc-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); border-color: #3b82f6; }
 
-        /* Badge Status */
         .status-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .status-Proses { background: #fef3c7; color: #d97706; border: 1px solid #fcd34d; } /* Kuning */
-        .status-Selesai { background: #dcfce7; color: #166534; border: 1px solid #86efac; } /* Hijau */
-        .status-Belum { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; } /* Merah */
+        .status-Proses { background: #fef3c7; color: #d97706; border: 1px solid #fcd34d; }
+        .status-Selesai { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .status-Belum { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 
-        /* Modal Preview */
         .preview-modal-content { width: 80%; height: 90vh; background: #fff; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
         .preview-body { flex: 1; background: #525659; display: flex; justify-content: center; align-items: center; }
         #previewFrame { width: 100%; height: 100%; border: none; }
         #previewImage { max-width: 100%; max-height: 100%; object-fit: contain; }
         
-        /* Tombol Aksi di Card */
         .card-actions { display: flex; gap: 8px; border-top: 1px solid #f3f4f6; padding-top: 15px; margin-top: 15px; }
         .btn-act { flex: 1; padding: 8px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-view { background: #eff6ff; color: #2563eb; } .btn-view:hover { background: #dbeafe; }
@@ -168,7 +157,6 @@ if (isset($_GET["hapus"])) {
                     <?php foreach ($data_keuangan as $row) : 
                         $fileUrl = $base_url . "uploads/keuangan/" . $row['bukti_file'];
                         $ext = strtolower(pathinfo($row['bukti_file'], PATHINFO_EXTENSION));
-                        // Warna judul berdasarkan status (opsional)
                         $statusColor = ($row['status'] == 'Selesai') ? '#166534' : '#111827';
                     ?>
                     <div class="doc-card">
@@ -197,7 +185,7 @@ if (isset($_GET["hapus"])) {
                                 <img src="<?= $base_url; ?>gambar/edit.png" width="16">
                             </button>
                             
-                            <a href="spider.php?hapus=<?= $row['id']; ?>" class="btn-act btn-del" onclick="return confirm('Yakin ingin menghapus data ini?');" title="Hapus Data">
+                            <a href="sirup.php?hapus=<?= $row['id']; ?>" class="btn-act btn-del" onclick="return confirm('Yakin ingin menghapus data ini?');" title="Hapus Data">
                                 <img src="<?= $base_url; ?>gambar/hapuss.png" width="16">
                             </a>
                         </div>
@@ -209,7 +197,6 @@ if (isset($_GET["hapus"])) {
     </div>
 
     <script>
-        // --- LOGIKA MODAL TAMBAH/EDIT ---
         const modal = document.getElementById("addDataModal");
         
         document.getElementById("addDataBtn").onclick = () => {
@@ -221,7 +208,6 @@ if (isset($_GET["hapus"])) {
             modal.style.display = "flex";
         };
 
-        // Fungsi Edit Data: Mengisi form dengan data dari database
         function editData(data) {
             document.getElementById("dataId").value = data.id;
             document.getElementById("addTanggal").value = data.tanggal_kegiatan;
@@ -236,7 +222,6 @@ if (isset($_GET["hapus"])) {
             modal.style.display = "flex";
         }
 
-        // --- LOGIKA PREVIEW ---
         const previewModal = document.getElementById("previewModal");
         const previewContainer = document.getElementById("previewContainer");
 
@@ -253,7 +238,6 @@ if (isset($_GET["hapus"])) {
             previewModal.style.display = "flex";
         }
 
-        // Tutup Modal
         document.querySelector(".closeAddBtn").onclick = () => modal.style.display = "none";
         document.querySelector(".add-cancel").onclick = () => modal.style.display = "none";
         document.querySelector(".closePreviewBtn").onclick = () => previewModal.style.display = "none";
@@ -263,7 +247,6 @@ if (isset($_GET["hapus"])) {
             if(e.target == previewModal) previewModal.style.display = "none";
         };
 
-        // --- PENCARIAN LIVE ---
         document.getElementById("searchInput").addEventListener("keyup", function() {
             let filter = this.value.toLowerCase();
             document.querySelectorAll(".doc-card").forEach(card => {

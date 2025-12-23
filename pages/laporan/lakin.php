@@ -1,25 +1,20 @@
 <?php
 require '../../config/functions.php';
 
-// === CONFIGURASI HALAMAN ===
 $kategori = 'Lakin';
 $judul_page = 'Laporan Lakin';
-// ===========================
 
-// Ambil Data Sesuai Kategori
 $data_laporan = query("SELECT * FROM data_laporan WHERE kategori = '$kategori' ORDER BY id DESC");
 
-// Logic Tambah
 if (isset($_POST["simpan_data"])) {
     if (tambahLaporan($_POST) > 0) {
-        echo "<script>alert('Laporan berhasil diupload!'); window.location.href='keuangan.php';</script>";
+        echo "<script>alert('Laporan berhasil diupload!'); window.location.href='lakin.php';</script>";
     }
 }
 
-// Logic Hapus
 if (isset($_GET["hapus"])) {
     if (hapusLaporan($_GET["hapus"]) > 0) {
-        echo "<script>alert('Laporan dihapus!'); window.location.href='keuangan.php';</script>";
+        echo "<script>alert('Laporan dihapus!'); window.location.href='lakin.php';</script>";
     }
 }
 ?>
@@ -33,7 +28,6 @@ if (isset($_GET["hapus"])) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= $base_url; ?>assets/css/kepegawaian-kgb.css">
     <style>
-        /* Style Card Grid (Sama dengan PPPK/Sakip) */
         .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
         .doc-card { 
             background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; 
@@ -42,7 +36,6 @@ if (isset($_GET["hapus"])) {
         }
         .doc-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); border-color: #3b82f6; }
 
-        /* Icon File Besar */
         .file-icon { 
             width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; 
             font-size: 18px; font-weight: bold; margin-bottom: 15px; 
@@ -52,7 +45,6 @@ if (isset($_GET["hapus"])) {
         .icon-img { background: #dbeafe; color: #2563eb; }
         .icon-doc { background: #f3f4f6; color: #4b5563; }
 
-        /* Modal Preview */
         .preview-modal-content { width: 80%; height: 90vh; background: #fff; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
         .preview-body { flex: 1; background: #525659; display: flex; justify-content: center; align-items: center; }
         #previewFrame { width: 100%; height: 100%; border: none; }
@@ -97,7 +89,7 @@ if (isset($_GET["hapus"])) {
 
                         <div class="form-group">
                             <label>Judul Laporan</label>
-                            <input type="text" name="judul" required placeholder="Contoh: Laporan Keuangan Bulan Januari" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
+                            <input type="text" name="judul" required placeholder="Contoh: Laporan Lakin Bulan Januari" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
                         </div>
 
                         <div class="form-group">
@@ -141,7 +133,6 @@ if (isset($_GET["hapus"])) {
                         $fileUrl = $base_url . "uploads/laporan/" . $row['nama_file'];
                         $ext = strtolower(pathinfo($row['nama_file'], PATHINFO_EXTENSION));
                         
-                        // Icon Type
                         $iconClass = 'icon-doc'; $typeText = 'DOC';
                         if ($ext == 'pdf') { $iconClass = 'icon-pdf'; $typeText = 'PDF'; }
                         if (in_array($ext, ['xls','xlsx'])) { $iconClass = 'icon-xls'; $typeText = 'XLS'; }

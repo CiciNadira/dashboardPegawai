@@ -21,8 +21,8 @@
         </div>
     </div>
     
-    <div class="stat-mini" style="background: #1f2937; color: white; border:none;">
-        <div class="sm-icon" style="background:rgba(255,255,255,0.1); color:#fff;">🕒</div>
+    <div class="stat-mini" style="background: #df10a8ff; color: white; border:none;">
+        <div class="sm-icon" style="background:rgba(185, 115, 115, 0.1); color:#fff;">🕒</div>
         <div>
             <div class="sm-val" id="digitalClock">--:--</div>
             <div class="sm-label" style="color:#9ca3af;"><?= date('d M Y'); ?></div>
