@@ -11,9 +11,9 @@ $user = query("SELECT * FROM users WHERE username = '$username_sess'")[0];
 $list_pegawai = query("SELECT id, nama_lengkap, nip FROM pegawai ORDER BY nama_lengkap ASC");
 
 // Ambil Posisi Tim Saat Ini
-$cur_sekretaris = query("SELECT id FROM pegawai WHERE jabatan_dashboard = 'Sekretaris'")[0]['id'] ?? '';
-$cur_bendahara  = query("SELECT id FROM pegawai WHERE jabatan_dashboard = 'Bendahara'")[0]['id'] ?? '';
-$cur_staf       = query("SELECT id FROM pegawai WHERE jabatan_dashboard = 'Staf'")[0]['id'] ?? '';
+$cur_bendahara = query("SELECT id FROM pegawai WHERE jabatan_dashboard = 'Bendahara'")[0]['id'] ?? '';
+$cur_bmn       = query("SELECT id FROM pegawai WHERE jabatan_dashboard = 'BMN'")[0]['id'] ?? '';
+$cur_ppabp     = query("SELECT id FROM pegawai WHERE jabatan_dashboard = 'PPABP'")[0]['id'] ?? '';
 
 // LOGIC UPDATE
 if (isset($_POST["update_user"])) {
@@ -89,16 +89,6 @@ if (isset($_POST["update_tim"])) {
             <div class="card-setting">
                 <div class="card-title">👥 Susunan Tim (Tampilan Dashboard Kanan)</div>
                 <form action="" method="post">
-                    <label>Sekretaris</label>
-                    <select name="sekretaris_id">
-                        <option value="">-- Kosong --</option>
-                        <?php foreach($list_pegawai as $p): ?>
-                            <option value="<?= $p['id']; ?>" <?= ($p['id'] == $cur_sekretaris) ? 'selected' : ''; ?>>
-                                <?= $p['nama_lengkap']; ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-
                     <label>Bendahara</label>
                     <select name="bendahara_id">
                         <option value="">-- Kosong --</option>
@@ -109,11 +99,21 @@ if (isset($_POST["update_tim"])) {
                         <?php endforeach; ?>
                     </select>
 
-                    <label>Staf Umum</label>
-                    <select name="staf_id">
+                    <label>BMN</label>
+                    <select name="bmn_id">
                         <option value="">-- Kosong --</option>
                         <?php foreach($list_pegawai as $p): ?>
-                            <option value="<?= $p['id']; ?>" <?= ($p['id'] == $cur_staf) ? 'selected' : ''; ?>>
+                            <option value="<?= $p['id']; ?>" <?= ($p['id'] == $cur_bmn) ? 'selected' : ''; ?>>
+                                <?= $p['nama_lengkap']; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <label>PPABP</label>
+                    <select name="ppabp_id">
+                        <option value="">-- Kosong --</option>
+                        <?php foreach($list_pegawai as $p): ?>
+                            <option value="<?= $p['id']; ?>" <?= ($p['id'] == $cur_ppabp) ? 'selected' : ''; ?>>
                                 <?= $p['nama_lengkap']; ?>
                             </option>
                         <?php endforeach; ?>

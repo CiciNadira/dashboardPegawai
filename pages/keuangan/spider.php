@@ -93,15 +93,15 @@ if (isset($_GET["hapus"])) {
         </div>
 
         <h1 class="page-title"><?= $judul_halaman; ?></h1>
-        <p class="page-sub">Kelola kegiatan dan bukti dukung aplikasi keuangan.</p>
+        <p class="page-sub">Kelola Dokumen dan bukti dukung aplikasi keuangan.</p>
         
         <div class="box" style="background:transparent; border:none; padding:0; box-shadow:none;">
             <div class="top-actions" style="background:#fff; padding:20px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px;">
                 <div class="search-box" style="margin-bottom:0; flex:1;">
                     <img src="<?= $base_url; ?>gambar/search.png" width="18">
-                    <input type="text" id="searchInput" placeholder="Cari uraian kegiatan...">
+                    <input type="text" id="searchInput" placeholder="Cari dokumen...">
                 </div>
-                <button class="btn btn-primary" id="addDataBtn" style="background: #2563eb;">+ Tambah Kegiatan</button>
+                <button class="btn btn-primary" id="addDataBtn" style="background: #2563eb;">+ Upload Dokumen</button>
             </div>
 
             <div id="addDataModal" class="modal">
@@ -115,12 +115,12 @@ if (isset($_GET["hapus"])) {
                         <input type="hidden" name="file_lama" id="fileLama">
 
                         <div class="form-group">
-                            <label>Tanggal Kegiatan</label>
+                            <label>Tanggal Dokumen</label>
                             <input type="date" name="tanggal" id="addTanggal" required style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
                         </div>
                         <div class="form-group">
-                            <label>Uraian Kegiatan</label>
-                            <input type="text" name="uraian" id="addUraian" required placeholder="Contoh: Input Data Triwulan I" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+                            <label>Uraian Dokumen</label>
+                            <input type="text" name="uraian" id="addUraian" required placeholder="Contoh: Input Data Spider" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
                         </div>
                         <div class="form-group">
                             <label>Status</label>
@@ -162,7 +162,7 @@ if (isset($_GET["hapus"])) {
             <div class="doc-grid" id="docGrid">
                 <?php if (empty($data_keuangan)) : ?>
                     <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #6b7280; background:#fff; border-radius:12px; border:1px dashed #ccc;">
-                        <p>Belum ada data kegiatan <?= $jenis_aplikasi; ?>.</p>
+                        <p>Belum ada dokumen untuk <?= $jenis_aplikasi; ?>.</p>
                     </div>
                 <?php else : ?>
                     <?php foreach ($data_keuangan as $row) : 
@@ -190,7 +190,7 @@ if (isset($_GET["hapus"])) {
 
                         <div class="card-actions">
                             <button type="button" class="btn-act btn-view" onclick="openPreview('<?= $fileUrl; ?>', '<?= $ext; ?>')" title="Lihat Bukti">
-                                <img src="<?= $base_url; ?>gambar/eye-open.png" width="16" style="margin-right:4px;"> Bukti
+                                <img src="<?= $base_url; ?>gambar/eye-open.png" width="16">
                             </button>
                             
                             <button type="button" class="btn-act btn-edit" onclick='editData(<?= json_encode($row); ?>)' title="Edit Data">
@@ -198,7 +198,7 @@ if (isset($_GET["hapus"])) {
                             </button>
                             
                             <a href="spider.php?hapus=<?= $row['id']; ?>" class="btn-act btn-del" onclick="return confirm('Yakin ingin menghapus data ini?');" title="Hapus Data">
-                                <img src="<?= $base_url; ?>gambar/hapuss.png" width="16">
+                                <img src="<?= $base_url; ?>gambar/hapuss.png?v=<?= filemtime('../../gambar/hapuss.png'); ?>" width="16">
                             </a>
                         </div>
                     </div>

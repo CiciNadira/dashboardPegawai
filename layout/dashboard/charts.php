@@ -18,7 +18,7 @@ while ($row = mysqli_fetch_assoc($query_gol)) {
 }
 ?>
 
-<div class="charts-card" style="background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; padding: 20px; height: 100%;">
+<div class="charts-card" style="background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; padding: 20px; height: 100%; margin-bottom:20px;">
     <div style="font-weight: 700; color: #374151; margin-bottom: 20px; font-size: 16px;">
         📊 Statistik Kepegawaian
     </div>

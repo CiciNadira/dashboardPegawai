@@ -42,15 +42,13 @@
 }
 .t-role {
     font-size: 10px; font-weight: 700; text-transform: uppercase;
-    padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 2px;
+    padding: 2px 8px !important; border-radius: 4px; display: inline-block !important; margin-bottom: 2px;
 }
 .t-name { font-size: 14px; font-weight: 600; color: #111; }
 .t-nip { font-size: 11px; color: #6b7280; }
 
-/* Warna Role */
-.role-Sekretaris { background: #f5f3ff; color: #7c3aed; }
-.role-Bendahara { background: #f0fdf4; color: #166534; }
-.role-Staf { background: #fff7ed; color: #c2410c; }
+/* Warna Role - PERBAIKAN FINAL */
+/* Pakai !important supaya tidak kalah dengan aturan CSS lain */
 
 /* === SECTION SUB BAGIAN (GRID MENU) === */
 .section-title {
@@ -79,23 +77,21 @@
 .subbag-icon { width: 50px; height: 50px; object-fit: contain; margin-bottom: 10px; }
 .subbag-name { font-weight: 600; font-size: 14px; color: #374151; }
 
-
 /* === RESPONSIVE (PENTING) === */
 /* Jika layar mengecil (Tablet/HP), ubah jadi 2 kolom */
-/* Supaya tetap simetris (4 baris x 2 kolom = 8 item) */
 @media (max-width: 1000px) {
     .subbag-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-/* Jika layar HP sangat kecil, 1 kolom (opsional, tapi 2 kolom biasanya cukup) */
+/* Jika layar HP sangat kecil, rapatkan */
 @media (max-width: 480px) {
     .subbag-grid {
-        gap: 10px; /* Rapatkan sedikit di HP */
+        gap: 10px;
     }
     .subbag-card {
-        height: 120px; /* Perkecil tinggi kartu di HP */
+        height: 120px;
     }
 }
 

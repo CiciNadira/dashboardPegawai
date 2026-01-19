@@ -607,22 +607,22 @@ function updateUser($data) {
 function updateTimDashboard($data) {
     global $conn;
 
-    // Reset semua jadi 'Tidak' dulu
-    mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'Tidak'");
+    // Reset semua jadi NULL dulu (atau 'Tidak' jika mau konsisten, tapi NULL lebih baik untuk query IN)
+    mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = NULL");
 
-    if (!empty($data['sekretaris_id'])) {
-        $id = $data['sekretaris_id'];
-        mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'Sekretaris' WHERE id = $id");
-    }
     if (!empty($data['bendahara_id'])) {
-        $id = $data['bendahara_id'];
+        $id = mysqli_real_escape_string($conn, $data['bendahara_id']); // Tambah escape untuk keamanan
         mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'Bendahara' WHERE id = $id");
     }
-    if (!empty($data['staf_id'])) {
-        $id = $data['staf_id'];
-        mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'Staf' WHERE id = $id");
+    if (!empty($data['bmn_id'])) {
+        $id = mysqli_real_escape_string($conn, $data['bmn_id']);
+        mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'BMN' WHERE id = $id");
     }
-    return 1;
+    if (!empty($data['ppabp_id'])) {
+        $id = mysqli_real_escape_string($conn, $data['ppabp_id']);
+        mysqli_query($conn, "UPDATE pegawai SET jabatan_dashboard = 'ppabp' WHERE id = $id");
+    }
+    return 1; // Atau return mysqli_affected_rows($conn) jika mau hitung perubahan
 }
 
 // ==========================================
@@ -848,7 +848,7 @@ function resetPasswordViaToken($data) {
     $kode_unik = htmlspecialchars($data["kode_unik"]);
     $pass_baru = mysqli_real_escape_string($conn, $data["password_baru"]);
 
-    $KODE_RAHASIA_SISTEM = "abangtampan"; 
+    $KODE_RAHASIA_SISTEM = "umum"; 
 
     if ($kode_unik !== $KODE_RAHASIA_SISTEM) {
         echo "<script>alert('Kode Rahasia SALAH! Hubungi pembuat aplikasi.');</script>";

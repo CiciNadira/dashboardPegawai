@@ -49,6 +49,12 @@ if (isset($_GET["hapus"])) {
         .preview-body { flex: 1; background: #525659; display: flex; justify-content: center; align-items: center; }
         #previewFrame { width: 100%; height: 100%; border: none; }
         #previewImage { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        .card-actions { display: flex; gap: 8px; border-top: 1px solid #f3f4f6; padding-top: 15px; margin-top: 15px; }
+        .btn-act { flex: 1; padding: 8px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-view { background: #eff6ff; color: #2563eb; } .btn-view:hover { background: #dbeafe; }
+        .btn-download { background: #f0fdf4; color: #166534; text-decoration: none; } .btn-download:hover { background: #dcfce7; }
+        .btn-del { background: #fef2f2; color: #dc2626; text-decoration: none; } .btn-del:hover { background: #fee2e2; }
     </style>
 </head>
 <body>
@@ -153,15 +159,17 @@ if (isset($_GET["hapus"])) {
                             Diupload: <?= date('d M Y', strtotime($row['tanggal_upload'])); ?>
                         </small>
 
-                        <div style="display:flex; gap:10px; border-top:1px solid #f3f4f6; padding-top:15px; margin-top:auto;">
-                            <button onclick="openPreview('<?= $fileUrl; ?>', '<?= $ext; ?>')" style="flex:1; background:#eff6ff; color:#2563eb; border:none; padding:8px; border-radius:8px; cursor:pointer;">Preview</button>
+                        <div class="card-actions">
+                            <button type="button" class="btn-act btn-view" onclick="openPreview('<?= $fileUrl; ?>', '<?= $ext; ?>')" title="Lihat Laporan">
+                                <img src="<?= $base_url; ?>gambar/eye-open.png" width="16">
+                            </button>
                             
-                            <a href="<?= $fileUrl; ?>" download style="background:#f0fdf4; color:#166534; padding:8px 10px; border-radius:8px; text-decoration:none;">
-                                <img src="<?= $base_url; ?>gambar/export.png" width="14">
+                            <a href="<?= $fileUrl; ?>" download class="btn-act btn-download" title="Unduh Laporan">
+                                <img src="<?= $base_url; ?>gambar/unduhh.png" width="16">
                             </a>
-
-                            <a href="?hapus=<?= $row['id']; ?>" onclick="return confirm('Hapus laporan ini?');" style="background:#fef2f2; color:#dc2626; padding:8px 10px; border-radius:8px; text-decoration:none;">
-                                <img src="<?= $base_url; ?>gambar/hapuss.png" width="14">
+                            
+                            <a href="?hapus=<?= $row['id']; ?>" class="btn-act btn-del" onclick="return confirm('Hapus laporan ini?');" title="Hapus Laporan">
+                                <img src="<?= $base_url; ?>gambar/hapuss.png?v=<?= filemtime('../../gambar/hapuss.png'); ?>" width="16">
                             </a>
                         </div>
                     </div>

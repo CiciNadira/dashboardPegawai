@@ -160,8 +160,8 @@ if (isset($_GET["hapus"])) {
                             <th rowspan="2">AKSI</th>
                         </tr>
                         <tr>
-                            <th>Terakhir</th>
-                            <th>YAD</th>
+                            <th style="color: rgb(107, 114, 128)">Terakhir</th>
+                            <th style="color: rgb(107, 114, 128)">YAD</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">

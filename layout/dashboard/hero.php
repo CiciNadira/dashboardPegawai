@@ -1,7 +1,7 @@
-<div class="dashboard-hero">
+<div class="dashboard-hero" style="margin-top: 20px;">
     <div class="hero-left">
         <div class="subbag-big-card" style="height:100%; margin:0;">
-            <img src="<?= $base_url; ?>gambar/kasubbag.jpg" class="subbag-photo">
+            <img src="<?= $base_url; ?>gambar/user.png" class="subbag-photo">
             <div class="subbag-info">
                 <h2><?= $jabatan_user; ?></h2> 
                 <h4>Unit Pengelola Administrasi</h4>
@@ -25,14 +25,30 @@
                 <?php else : ?>
                     <?php foreach($tim_kanan as $t) : 
                         $inisial = strtoupper(substr($t['nama_lengkap'], 0, 2));
-                        $jabatan = $t['jabatan_dashboard'];
-                        $bg = ($jabatan=='Sekretaris')?'#f5f3ff':(($jabatan=='Bendahara')?'#f0fdf4':'#fff7ed');
-                        $cl = ($jabatan=='Sekretaris')?'#7c3aed':(($jabatan=='Bendahara')?'#166534':'#c2410c');
+                        
+                        // PERBAIKAN: Paksa nama jabatan jadi huruf besar semua
+                        $jabatan_asli = $t['jabatan_dashboard']; 
+                        $jabatan_upper = strtoupper($jabatan_asli); 
+
+                        // Logika warna untuk avatar (Lingkaran CI, JA, SU)
+                        if ($jabatan_upper == 'BENDAHARA') {
+                            $bg = '#f0fdf4'; $cl = '#166534'; // Hijau
+                        } elseif ($jabatan_upper == 'BMN') {
+                            $bg = '#fff7ed'; $cl = '#c2410c'; // Oranye
+                        } elseif ($jabatan_upper == 'PPABP') {
+                            $bg = '#e0f2fe'; $cl = '#0369a1'; // Biru Muda (Ini agar SU jadi biru)
+                        } else {
+                            $bg = '#f3f4f6'; $cl = '#6b7280';
+                        }
                     ?>
                     <div class="team-item">
-                        <div class="t-avatar" style="background:<?= $bg; ?>; color:<?= $cl; ?>;"><?= $inisial; ?></div>
+                        <div class="t-avatar" style="background:<?= $bg; ?>; color:<?= $cl; ?>;">
+                            <?= $inisial; ?>
+                        </div>
                         <div class="t-details">
-                            <span class="t-role role-<?= $jabatan; ?>"><?= $jabatan; ?></span>
+                            <span class="t-role role-<?= $jabatan_upper; ?>">
+                                <?= $jabatan_upper; ?>
+                            </span>
                             <div class="t-name"><?= $t['nama_lengkap']; ?></div>
                             <div class="t-nip">NIP. <?= $t['nip']; ?></div>
                         </div>

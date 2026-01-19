@@ -13,8 +13,8 @@ $nama_user    = $user_data['nama_lengkap'] ?? 'Administrator';
 $nip_user     = $user_data['nip'] ?? '-'; 
 $jabatan_user = $user_data['jabatan'] ?? 'Unit Pengelola Administrasi';
 
-$tim_kanan    = query("SELECT * FROM pegawai WHERE jabatan_dashboard IN ('Sekretaris', 'Bendahara', 'Staf') 
-                       ORDER BY FIELD(jabatan_dashboard, 'Sekretaris', 'Bendahara', 'Staf') ASC");
+$tim_kanan    = query("SELECT * FROM pegawai WHERE jabatan_dashboard IN ('Bendahara', 'BMN', 'PPABP') 
+                       ORDER BY FIELD(jabatan_dashboard, 'Bendahara', 'BMN', 'PPABP') ASC");
 
 // Data Statistik untuk Info.php
 $total_pegawai = count(query("SELECT id FROM pegawai"));
@@ -33,6 +33,34 @@ $total_pppk    = count(query("SELECT id FROM pegawai WHERE status_kepegawaian = 
     <link rel="stylesheet" href="<?= $base_url; ?>assets/css/kepegawaian-sdm.css">
     <link rel="stylesheet" href="<?= $base_url; ?>assets/css/dashboard.css">
     <link rel="stylesheet" href="<?= $base_url; ?>assets/css/dashboard-custom.css">
+
+    <style>
+        /* CSS INI UNTUK MEMASTIKAN BACKGROUND ROLE MUNCUL */
+        .t-role {
+            display: inline-block !important;
+            padding: 2px 1px !important;
+            border-radius: 4px !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            margin-bottom: 4px !important;
+            line-height: normal !important;
+        }
+
+        /* Warna spesifik yang dipaksa (Override) */
+        .role-BENDAHARA { 
+            background-color: #f0fdf4 !important; 
+            color: #166534 !important; 
+        }
+        .role-BMN { 
+            background-color: #fff7ed !important; 
+            color: #c2410c !important; 
+        }
+        .role-PPABP { 
+            background-color: #e0f2fe !important; 
+            color: #0369a1 !important; 
+        }
+    </style>
 </head>
 
 <body>

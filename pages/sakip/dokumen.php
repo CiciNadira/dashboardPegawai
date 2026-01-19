@@ -42,6 +42,12 @@ if (isset($_GET["hapus"])) {
         .preview-body { flex: 1; background: #525659; display: flex; justify-content: center; align-items: center; }
         #previewFrame { width: 100%; height: 100%; border: none; }
         #previewImage { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        .card-actions { display: flex; gap: 8px; border-top: 1px solid #f3f4f6; padding-top: 15px; margin-top: 15px; }
+        .btn-act { flex: 1; padding: 8px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-view { background: #eff6ff; color: #2563eb; } .btn-view:hover { background: #dbeafe; }
+        .btn-download { background: #f0fdf4; color: #166534; text-decoration: none; } .btn-download:hover { background: #dcfce7; }
+        .btn-del { background: #fef2f2; color: #dc2626; text-decoration: none; } .btn-del:hover { background: #fee2e2; }
     </style>
 </head>
 <body>
@@ -146,11 +152,17 @@ if (isset($_GET["hapus"])) {
                         <h4 style="margin:0 0 10px 0; color:#1f2937; font-size:16px;"><?= $row['judul_dokumen']; ?></h4>
                         <p style="font-size:13px; color:#6b7280; margin-bottom:15px;"><?= $row['keterangan'] ? $row['keterangan'] : '-'; ?></p>
 
-                        <div style="display:flex; gap:10px; border-top:1px solid #f3f4f6; padding-top:15px;">
-                            <button onclick="openPreview('<?= $fileUrl; ?>', '<?= $ext; ?>')" style="flex:1; background:#eff6ff; color:#2563eb; border:none; padding:8px; border-radius:8px; cursor:pointer;">Preview</button>
-                            <a href="<?= $fileUrl; ?>" download style="background:#f0fdf4; color:#166534; padding:8px 12px; border-radius:8px; text-decoration:none;">Unduh</a>
-                            <a href="dokumen.php?tw=<?= $tw; ?>&hapus=<?= $row['id']; ?>" onclick="return confirm('Hapus?');" style="background:#fef2f2; color:#dc2626; padding:8px 12px; border-radius:8px; text-decoration:none;">
-                                <img src="<?= $base_url; ?>gambar/hapuss.png" width="14">
+                        <div class="card-actions">
+                            <button type="button" class="btn-act btn-view" onclick="openPreview('<?= $fileUrl; ?>', '<?= $ext; ?>')" title="Lihat Dokumen">
+                                <img src="<?= $base_url; ?>gambar/eye-open.png" width="16">
+                            </button>
+                            
+                            <a href="<?= $fileUrl; ?>" download class="btn-act btn-download" title="Unduh Dokumen">
+                                <img src="<?= $base_url; ?>gambar/unduhh.png" width="16">
+                            </a>
+                            
+                            <a href="dokumen.php?tw=<?= $tw; ?>&hapus=<?= $row['id']; ?>" class="btn-act btn-del" onclick="return confirm('Hapus?');" title="Hapus Dokumen">
+                                <img src="<?= $base_url; ?>gambar/hapuss.png?v=<?= filemtime('../../gambar/hapuss.png'); ?>" width="16">
                             </a>
                         </div>
                     </div>

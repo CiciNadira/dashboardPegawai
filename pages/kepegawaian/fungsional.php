@@ -194,10 +194,10 @@ if (isset($_GET["hapus"])) {
                             <th rowspan="2">AKSI</th>
                         </tr>
                         <tr>
-                            <th>Angka</th>
-                            <th>Tahun</th>
-                            <th>Angka</th>
-                            <th>Tahun</th>
+                            <th style="color: rgb(107, 114, 128)">Angka</th>
+                            <th style="color: rgb(107, 114, 128)">Tahun</th>
+                            <th style="color: rgb(107, 114, 128)">Angka</th>
+                            <th style="color: rgb(107, 114, 128)">Tahun</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">

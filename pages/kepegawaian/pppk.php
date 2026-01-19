@@ -120,37 +120,35 @@ if (isset($_GET["hapus"])) {
             overflow: hidden;
         }
 
-        /* Footer Card (Tombol Aksi) */
-        .doc-footer {
+        /* Footer Card (Tombol Aksi) - Mirip Spider */
+        .card-actions {
             display: flex;
             gap: 8px;
             border-top: 1px solid #f3f4f6;
             padding-top: 15px;
+            margin-top: 15px;
         }
 
-        .btn-card {
+        .btn-act {
             flex: 1;
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: .2s;
-            text-decoration: none;
-            gap: 5px;
+            transition: 0.2s;
         }
 
-        .btn-preview { background: #eff6ff; color: #1d4ed8; }
-        .btn-preview:hover { background: #dbeafe; }
+        .btn-view { background: #eff6ff; color: #2563eb; }
+        .btn-view:hover { background: #dbeafe; }
 
         .btn-download { background: #f0fdf4; color: #15803d; }
         .btn-download:hover { background: #dcfce7; }
 
-        .btn-delete { background: #fef2f2; color: #b91c1c; }
-        .btn-delete:hover { background: #fee2e2; }
+        .btn-del { background: #fef2f2; color: #dc2626; }
+        .btn-del:hover { background: #fee2e2; }
 
 
         /* === CSS MODAL PREVIEW (Tetap sama) === */
@@ -289,17 +287,17 @@ if (isset($_GET["hapus"])) {
                             <p title="<?= $row['keterangan']; ?>"><?= $row['keterangan'] ? $row['keterangan'] : 'Tidak ada keterangan tambahan.'; ?></p>
                         </div>
 
-                        <div class="doc-footer">
-                            <a href="javascript:void(0);" class="btn-card btn-preview" onclick="openPreview('<?= $fileUrl; ?>', '<?= $fileExt; ?>', '<?= $row['judul_laporan']; ?>')">
-                                <img src="<?= $base_url; ?>gambar/eye-open.png" width="14" style="opacity:0.7"> Lihat
-                            </a>
+                        <div class="card-actions">
+                            <button type="button" class="btn-act btn-view" onclick="openPreview('<?= $fileUrl; ?>', '<?= $fileExt; ?>', '<?= $row['judul_laporan']; ?>')" title="Lihat">
+                                <img src="<?= $base_url; ?>gambar/eye-open.png" width="16">
+                            </button>
                             
-                            <a href="<?= $fileUrl; ?>" class="btn-card btn-download" target="_blank" download>
-                                <img src="<?= $base_url; ?>gambar/export.png" width="14" style="opacity:0.7"> Unduh
+                            <a href="<?= $fileUrl; ?>" class="btn-act btn-download" target="_blank" download title="Unduh">
+                                <img src="<?= $base_url; ?>gambar/export.png" width="16">
                             </a>
 
-                            <a href="pppk.php?hapus=<?= $row['id']; ?>" class="btn-card btn-delete" onclick="return confirm('Yakin ingin menghapus dokumen ini?');">
-                                <img src="<?= $base_url; ?>gambar/hapuss.png" width="14" style="opacity:0.7">
+                            <a href="pppk.php?hapus=<?= $row['id']; ?>" class="btn-act btn-del" onclick="return confirm('Yakin ingin menghapus dokumen ini?');" title="Hapus">
+                                <img src="<?= $base_url; ?>gambar/hapuss.png" width="16">
                             </a>
                         </div>
                     </div>
